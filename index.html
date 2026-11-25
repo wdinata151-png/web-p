@@ -1,329 +1,357 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#101827">
     <title>Accurate Modern — Accounting Workspace</title>
+
     <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="script.js"></script>
 </head>
+
 <body>
 
-<div class="app">
+<!-- LOGIN -->
+
+<div id="loginScreen" class="login-screen">
+    <form id="loginForm" class="login-card">
+
+        <div class="logo">A</div>
+
+        <h1>Accurate Modern</h1>
+        <p>Accounting Workspace</p>
+
+        <label>Email</label>
+        <input
+            type="email"
+            id="loginEmail"
+            placeholder="Email akun"
+            required
+        >
+
+        <label>Password</label>
+        <input
+            type="password"
+            id="loginPassword"
+            placeholder="Password"
+            required
+        >
+
+        <button type="submit" id="loginButton">
+            Masuk ke Workspace
+        </button>
+
+        <p id="loginMessage"></p>
+
+    </form>
+</div>
+
+
+<!-- APPLICATION -->
+
+<div id="app" class="app hidden">
 
     <aside class="sidebar">
+
         <div class="brand">
-            <div class="brandmark">A</div>
+            <div class="logo small">A</div>
             <div>
-                <strong>Accurate</strong>
+                <strong>Accurate Modern</strong>
                 <small>Accounting Workspace</small>
             </div>
         </div>
 
-        <div class="workspace-label">PERUSAHAAN AKTIF</div>
-
         <div class="company">
-            <div class="company-icon">SC</div>
-            <div class="company-info">
-                <b>Sharing Merchandise Cortis</b>
-                <span>Database lokal</span>
-            </div>
-            <span>⌄</span>
+            <small>PERUSAHAAN</small>
+            <strong id="companySidebar">Sharing Merchandise Cortis</strong>
         </div>
 
-        <nav class="nav">
-            <button class="nav-item active" data-view="dashboard">
-                <span>▦</span> Dashboard
-            </button>
-
-            <div class="nav-group">KEUANGAN</div>
-
-            <button class="nav-item" data-view="general">
-                <span>▤</span> Buku Besar
-            </button>
-            <button class="nav-item" data-view="report">
-                <span>▧</span> Laporan Keuangan
-            </button>
-            <button class="nav-item" data-view="cash">
-                <span>▣</span> Kas & Bank
-            </button>
-
-            <div class="nav-group">OPERASIONAL</div>
-
-            <button class="nav-item" data-view="sales">
-                <span>▥</span> Penjualan
-            </button>
-            <button class="nav-item" data-view="purchase">
-                <span>▧</span> Pembelian
-            </button>
-            <button class="nav-item" data-view="inventory">
-                <span>◇</span> Persediaan
-            </button>
-            <button class="nav-item" data-view="asset">
-                <span>▣</span> Aset Tetap
-            </button>
+        <nav>
+            <button class="nav active" data-page="dashboard">▦ Ringkasan</button>
+            <button class="nav" data-page="sales">↗ Penjualan</button>
+            <button class="nav" data-page="purchases">↙ Pembelian</button>
+            <button class="nav" data-page="expenses">− Pengeluaran</button>
+            <button class="nav" data-page="reports">▤ Laporan</button>
+            <button class="nav" data-page="settings">⚙ Pengaturan</button>
         </nav>
 
-        <div class="side-bottom">
+        <div class="sidebar-bottom">
+            <div class="sync">
+                <span id="syncDot"></span>
+                <span id="syncStatus">Menghubungkan...</span>
+            </div>
+
             <div class="user">
-                <div class="avatar">WG</div>
+                <div class="avatar" id="userAvatar">U</div>
                 <div>
-                    <b>Administrator</b>
-                    <span>Local Workspace</span>
+                    <strong id="userEmail"></strong>
+                    <small>Workspace member</small>
                 </div>
             </div>
+
+            <button id="logoutButton" class="logout">
+                Keluar ↗
+            </button>
         </div>
+
     </aside>
+
 
     <main class="main">
 
         <header class="topbar">
-            <button class="mobile-menu" id="mobileMenu">☰</button>
-
-            <div class="search">
-                <span>⌕</span>
-                <input id="globalSearch" type="search"
-                    placeholder="Cari transaksi, pelanggan, invoice...">
+            <div>
+                <small>WORKSPACE / ACCOUNTING</small>
+                <h2 id="pageTitle">Ringkasan</h2>
             </div>
 
             <div class="top-actions">
-                <span class="period">Periode: <b id="currentYear"></b></span>
-                <button class="icon-btn" id="backupBtn" title="Backup data">↓</button>
-                <button class="icon-btn" id="restoreBtn" title="Import data">↥</button>
-                <button class="icon-btn" id="settingsBtn" title="Pengaturan">⚙</button>
-                <input type="file" id="restoreInput" accept=".json" hidden>
+                <span id="today"></span>
+                <button id="refreshButton" class="secondary">↻ Refresh</button>
             </div>
         </header>
 
-        <div class="main-scroll">
-            <div class="container">
 
-                <!-- DASHBOARD -->
-                <section class="view active" id="dashboard">
-                    <div class="page-head">
-                        <div>
-                            <div class="eyebrow">RINGKASAN BISNIS</div>
-                            <h1>Selamat datang kembali</h1>
-                            <p>Pantau kondisi keuangan Sharing Merchandise Cortis.</p>
-                        </div>
-                        <div class="head-actions">
-                            <button class="btn" id="exportReport">↓ Export</button>
-                            <button class="btn primary" data-action="new-sale">＋ Transaksi Baru</button>
-                        </div>
-                    </div>
+        <!-- DASHBOARD -->
 
-                    <div class="metrics" id="dashboardMetrics"></div>
+        <section id="dashboard" class="page active">
 
-                    <div class="grid">
-                        <div class="card">
-                            <div class="card-head">
-                                <div>
-                                    <h2>Ringkasan Kas</h2>
-                                    <span>Pergerakan saldo perusahaan</span>
-                                </div>
-                            </div>
-                            <div id="cashSummary"></div>
-                        </div>
+            <div class="section-heading">
+                <div>
+                    <h2>Selamat datang kembali.</h2>
+                    <p>Ringkasan kondisi keuangan perusahaan.</p>
+                </div>
 
-                        <div class="card">
-                            <div class="card-head">
-                                <div>
-                                    <h2>Aksi Cepat</h2>
-                                    <span>Transaksi yang sering digunakan</span>
-                                </div>
-                            </div>
-                            <div class="quick">
-                                <button data-action="new-sale">
-                                    <span>▤</span><b>Invoice</b>
-                                    <small>Buat invoice penjualan</small>
-                                </button>
-                                <button data-action="new-purchase">
-                                    <span>▧</span><b>Pembelian</b>
-                                    <small>Catat pembelian barang</small>
-                                </button>
-                                <button data-action="new-expense">
-                                    <span>▤</span><b>Pengeluaran</b>
-                                    <small>Catat biaya perusahaan</small>
-                                </button>
-                                <button data-action="new-capital">
-                                    <span>＋</span><b>Modal</b>
-                                    <small>Tambah modal pemilik</small>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                <button class="primary" data-add="sale">
+                    + Transaksi baru
+                </button>
+            </div>
 
-                    <div class="card activity">
-                        <div class="card-head">
-                            <div>
-                                <h2>Transaksi Terakhir</h2>
-                                <span>Aktivitas keuangan perusahaan</span>
-                            </div>
-                            <button class="btn small" data-goto="general">Lihat jurnal →</button>
-                        </div>
-                        <div id="recentTransactions"></div>
-                    </div>
+            <div class="metrics" id="dashboardMetrics"></div>
 
-                    <div class="card explorer">
-                        <div class="card-head">
-                            <div>
-                                <h2>Modul Akuntansi</h2>
-                                <span>Akses cepat ke seluruh fitur</span>
-                            </div>
-                        </div>
-                        <div class="explorer-grid">
-                            <button class="module" data-goto="general"><b>▤</b><span>Buku Besar<small>Akun & jurnal</small></span></button>
-                            <button class="module" data-goto="cash"><b>▣</b><span>Kas & Bank<small>Saldo & mutasi</small></span></button>
-                            <button class="module" data-goto="sales"><b>▥</b><span>Penjualan<small>Invoice & piutang</small></span></button>
-                            <button class="module" data-goto="purchase"><b>▧</b><span>Pembelian<small>Vendor & utang</small></span></button>
-                            <button class="module" data-goto="inventory"><b>◇</b><span>Persediaan<small>Stok & gudang</small></span></button>
-                        </div>
-                    </div>
-                </section>
+            <div class="dashboard-grid">
 
-                <!-- BUKU BESAR -->
-                <section class="view" id="general">
-                    <div class="page-head">
-                        <div>
-                            <div class="eyebrow">KEUANGAN</div>
-                            <h1>Buku Besar</h1>
-                            <p>Jurnal dan aktivitas akuntansi perusahaan.</p>
-                        </div>
-                        <button class="btn primary" data-action="new-journal">＋ Jurnal Baru</button>
-                    </div>
-                    <div class="card activity">
-                        <div class="card-head">
-                            <div><h2>Jurnal Umum</h2><span>Daftar transaksi berdasarkan akun</span></div>
-                        </div>
-                        <div id="journalTable"></div>
-                    </div>
-                </section>
+                <div class="panel">
+                    <h3>Ringkasan kas</h3>
+                    <div id="cashSummary"></div>
+                </div>
 
-                <!-- LAPORAN -->
-                <section class="view" id="report">
-                    <div class="page-head">
-                        <div>
-                            <div class="eyebrow">KEUANGAN</div>
-                            <h1>Laporan Keuangan</h1>
-                            <p>Laporan keuangan berdasarkan transaksi yang tersimpan.</p>
-                        </div>
-                        <button class="btn primary" id="printReport">Cetak Laporan</button>
-                    </div>
-                    <div id="reportContent"></div>
-                </section>
-
-                <!-- KAS -->
-                <section class="view" id="cash">
-                    <div class="page-head">
-                        <div>
-                            <div class="eyebrow">KEUANGAN</div>
-                            <h1>Kas & Bank</h1>
-                            <p>Pantau saldo dan mutasi kas perusahaan.</p>
-                        </div>
-                        <button class="btn primary" data-action="new-expense">＋ Transaksi Kas</button>
-                    </div>
-                    <div id="cashMetrics" class="metrics"></div>
-                    <div class="card activity">
-                        <div class="card-head"><div><h2>Mutasi Kas</h2><span>Seluruh penerimaan dan pengeluaran</span></div></div>
-                        <div id="cashTable"></div>
-                    </div>
-                </section>
-
-                <!-- PENJUALAN -->
-                <section class="view" id="sales">
-                    <div class="page-head">
-                        <div>
-                            <div class="eyebrow">OPERASIONAL</div>
-                            <h1>Penjualan</h1>
-                            <p>Kelola invoice, pembeli, penerimaan, dan piutang.</p>
-                        </div>
-                        <button class="btn primary" data-action="new-sale">＋ Invoice Baru</button>
-                    </div>
-                    <div id="salesMetrics" class="metrics"></div>
-                    <div class="card activity">
-                        <div class="card-head"><div><h2>Daftar Penjualan</h2><span>Invoice dan status pembayaran</span></div></div>
-                        <div id="salesTable"></div>
-                    </div>
-                </section>
-
-                <!-- PEMBELIAN -->
-                <section class="view" id="purchase">
-                    <div class="page-head">
-                        <div>
-                            <div class="eyebrow">OPERASIONAL</div>
-                            <h1>Pembelian</h1>
-                            <p>Kelola pembelian barang dan tagihan vendor.</p>
-                        </div>
-                        <button class="btn primary" data-action="new-purchase">＋ Pembelian Baru</button>
-                    </div>
-                    <div id="purchaseMetrics" class="metrics"></div>
-                    <div class="card activity">
-                        <div class="card-head"><div><h2>Rincian Pembelian</h2><span>Daftar pembelian barang</span></div></div>
-                        <div id="purchaseTable"></div>
-                    </div>
-                </section>
-
-                <!-- PERSEDIAAN -->
-                <section class="view" id="inventory">
-                    <div class="page-head">
-                        <div>
-                            <div class="eyebrow">OPERASIONAL</div>
-                            <h1>Persediaan</h1>
-                            <p>Pantau nilai stok dan pergerakan barang.</p>
-                        </div>
-                        <button class="btn primary" data-action="new-purchase">＋ Barang Masuk</button>
-                    </div>
-                    <div id="inventoryMetrics" class="metrics"></div>
-                    <div class="card activity">
-                        <div class="card-head"><div><h2>Daftar Barang</h2><span>Ringkasan stok persediaan</span></div></div>
-                        <div id="inventoryTable"></div>
-                    </div>
-                </section>
-
-                <!-- ASET -->
-                <section class="view" id="asset">
-                    <div class="page-head">
-                        <div>
-                            <div class="eyebrow">OPERASIONAL</div>
-                            <h1>Aset Tetap</h1>
-                            <p>Kelola aset dan penyusutan perusahaan.</p>
-                        </div>
-                        <button class="btn primary" data-action="new-asset">＋ Tambah Aset</button>
-                    </div>
-                    <div class="card activity">
-                        <div class="card-head"><div><h2>Daftar Aset Tetap</h2><span>Aset milik perusahaan</span></div></div>
-                        <div id="assetTable"></div>
-                    </div>
-                </section>
+                <div class="panel">
+                    <h3>Aktivitas terbaru</h3>
+                    <div id="recentTransactions"></div>
+                </div>
 
             </div>
-        </div>
+
+        </section>
+
+
+        <!-- SALES -->
+
+        <section id="sales" class="page">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Penjualan</h2>
+                    <p>Kelola pesanan dan pembayaran pelanggan.</p>
+                </div>
+
+                <button class="primary" data-add="sale">
+                    + Tambah penjualan
+                </button>
+            </div>
+
+            <div id="salesMetrics" class="mini-metrics"></div>
+
+            <div class="panel table-panel">
+                <input id="salesSearch" placeholder="Cari pelanggan atau produk...">
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Pelanggan</th>
+                                <th>Produk</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="salesTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- PURCHASES -->
+
+        <section id="purchases" class="page">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Pembelian</h2>
+                    <p>Kelola pembelian barang dan pemasok.</p>
+                </div>
+
+                <button class="primary" data-add="purchase">
+                    + Tambah pembelian
+                </button>
+            </div>
+
+            <div id="purchaseMetrics" class="mini-metrics"></div>
+
+            <div class="panel table-panel">
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Pemasok</th>
+                                <th>Keterangan</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="purchaseTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- EXPENSES -->
+
+        <section id="expenses" class="page">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Pengeluaran</h2>
+                    <p>Kelola biaya operasional perusahaan.</p>
+                </div>
+
+                <button class="primary" data-add="expense">
+                    + Tambah pengeluaran
+                </button>
+            </div>
+
+            <div id="expenseMetrics" class="mini-metrics"></div>
+
+            <div class="panel table-panel">
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Kategori</th>
+                                <th>Keterangan</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="expenseTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- REPORTS -->
+
+        <section id="reports" class="page">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Laporan keuangan</h2>
+                    <p>Ringkasan transaksi perusahaan.</p>
+                </div>
+
+                <button id="exportCSV" class="secondary">
+                    ↓ Export CSV
+                </button>
+            </div>
+
+            <div id="reportContent" class="report-grid"></div>
+
+        </section>
+
+
+        <!-- SETTINGS -->
+
+        <section id="settings" class="page">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Pengaturan</h2>
+                    <p>Identitas perusahaan dan modal awal.</p>
+                </div>
+            </div>
+
+            <div class="panel settings-panel">
+
+                <label>Nama perusahaan</label>
+                <input id="companyInput" type="text">
+
+                <label>Modal awal (Rp)</label>
+                <input id="capitalInput" type="number" min="0">
+
+                <button id="saveSettings" class="primary">
+                    Simpan perubahan
+                </button>
+
+            </div>
+
+        </section>
+
     </main>
+
 </div>
 
-<!-- MODAL -->
-<div class="modal-overlay" id="modal">
-    <div class="modal">
-        <div class="modal-head">
-            <div>
-                <h2 id="modalTitle">Transaksi Baru</h2>
-                <span id="modalSubtitle">Masukkan informasi transaksi</span>
-            </div>
-            <button class="close-btn" id="closeModal">×</button>
+
+<!-- TRANSACTION MODAL -->
+
+<div id="modal" class="modal hidden">
+
+    <div class="modal-card">
+
+        <div class="modal-heading">
+            <h2 id="modalTitle">Tambah transaksi</h2>
+            <button id="closeModal" type="button">×</button>
         </div>
+
         <form id="transactionForm">
+
             <div id="modalFields"></div>
+
             <div class="modal-actions">
-                <button type="button" class="btn" id="cancelModal">Batal</button>
-                <button type="submit" class="btn primary">Simpan Transaksi</button>
+                <button type="button" id="cancelModal" class="secondary">
+                    Batal
+                </button>
+
+                <button type="submit" class="primary">
+                    Simpan transaksi
+                </button>
             </div>
+
         </form>
+
     </div>
+
 </div>
 
-<div class="toast" id="toast"></div>
 
-<script src="script.js"></script>
+<div id="toast"></div>
+
 </body>
 </html>
