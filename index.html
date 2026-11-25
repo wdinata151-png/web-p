@@ -6,86 +6,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#101827">
     <title>Accurate Modern — Accounting Workspace</title>
-    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="app">
 
-    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="brand">
-            <div class="brandmark">
-                <svg viewBox="0 0 24 24" fill="none">
-                    <path d="M5 17.5 9.5 5h5L19 17.5M7.2 13h9.6"
-                        stroke="white" stroke-width="2.2"
-                        stroke-linecap="round"/>
-                </svg>
-            </div>
+            <div class="brandmark">A</div>
             <div>
                 <strong>Accurate</strong>
                 <small>Accounting Workspace</small>
             </div>
         </div>
 
-        <div class="workspace-label">Perusahaan aktif</div>
+        <div class="workspace-label">PERUSAHAAN AKTIF</div>
 
         <div class="company">
             <div class="company-icon">SC</div>
             <div class="company-info">
                 <b>Sharing Merchandise Cortis</b>
-                <span>Database utama</span>
+                <span>Database lokal</span>
             </div>
-            <span class="chev">⌄</span>
+            <span>⌄</span>
         </div>
 
         <nav class="nav">
-            <div class="nav-group">Workspace</div>
-
             <button class="nav-item active" data-view="dashboard">
-                <span class="nav-icon">▦</span>
-                Dashboard
+                <span>▦</span> Dashboard
             </button>
 
-            <div class="nav-group">Keuangan</div>
+            <div class="nav-group">KEUANGAN</div>
 
             <button class="nav-item" data-view="general">
-                <span class="nav-icon">▤</span>
-                Buku Besar
+                <span>▤</span> Buku Besar
             </button>
-
+            <button class="nav-item" data-view="report">
+                <span>▧</span> Laporan Keuangan
+            </button>
             <button class="nav-item" data-view="cash">
-                <span class="nav-icon">▣</span>
-                Kas & Bank
+                <span>▣</span> Kas & Bank
             </button>
 
-            <div class="nav-group">Operasional</div>
+            <div class="nav-group">OPERASIONAL</div>
 
             <button class="nav-item" data-view="sales">
-                <span class="nav-icon">▥</span>
-                Penjualan
+                <span>▥</span> Penjualan
             </button>
-
             <button class="nav-item" data-view="purchase">
-                <span class="nav-icon">▧</span>
-                Pembelian
+                <span>▧</span> Pembelian
             </button>
-
             <button class="nav-item" data-view="inventory">
-                <span class="nav-icon">⬡</span>
-                Persediaan
+                <span>◇</span> Persediaan
             </button>
-
             <button class="nav-item" data-view="asset">
-                <span class="nav-icon">▣</span>
-                Aset Tetap
-            </button>
-
-            <div class="nav-group">Analisis</div>
-
-            <button class="nav-item" data-view="reports">
-                <span class="nav-icon">▥</span>
-                Laporan
+                <span>▣</span> Aset Tetap
             </button>
         </nav>
 
@@ -94,40 +70,29 @@
                 <div class="avatar">WG</div>
                 <div>
                     <b>Administrator</b>
-                    <span>Administrator</span>
+                    <span>Local Workspace</span>
                 </div>
-                <button class="user-menu" aria-label="Menu pengguna">⋯</button>
             </div>
         </div>
     </aside>
 
-    <!-- MAIN -->
     <main class="main">
 
         <header class="topbar">
-            <button class="mobile-menu" id="mobileMenu"
-                aria-label="Buka navigasi">☰</button>
+            <button class="mobile-menu" id="mobileMenu">☰</button>
 
             <div class="search">
                 <span>⌕</span>
-                <input id="searchInput" type="search"
+                <input id="globalSearch" type="search"
                     placeholder="Cari transaksi, pelanggan, invoice...">
-                <kbd>Ctrl K</kbd>
             </div>
 
             <div class="top-actions">
-                <span class="period">Periode: <strong>2026</strong></span>
-
-                <button class="icon-btn" id="syncButton"
-                    aria-label="Sinkronisasi">↻</button>
-
-                <button class="icon-btn" id="notificationButton"
-                    aria-label="Notifikasi">
-                    ♢ <span class="dot-notif"></span>
-                </button>
-
-                <button class="icon-btn" id="settingsButton"
-                    aria-label="Pengaturan">⚙</button>
+                <span class="period">Periode: <b id="currentYear"></b></span>
+                <button class="icon-btn" id="backupBtn" title="Backup data">↓</button>
+                <button class="icon-btn" id="restoreBtn" title="Import data">↥</button>
+                <button class="icon-btn" id="settingsBtn" title="Pengaturan">⚙</button>
+                <input type="file" id="restoreInput" accept=".json" hidden>
             </div>
         </header>
 
@@ -135,375 +100,200 @@
             <div class="container">
 
                 <!-- DASHBOARD -->
-                <section id="dashboard" class="view active">
+                <section class="view active" id="dashboard">
                     <div class="page-head">
                         <div>
-                            <div class="eyebrow">OVERVIEW</div>
-                            <h1>Dashboard</h1>
-                            <p>Selamat datang kembali. Berikut ringkasan bisnis Anda.</p>
+                            <div class="eyebrow">RINGKASAN BISNIS</div>
+                            <h1>Selamat datang kembali</h1>
+                            <p>Pantau kondisi keuangan Sharing Merchandise Cortis.</p>
                         </div>
-
                         <div class="head-actions">
-                            <button class="btn" id="exportButton">
-                                ↓ Export
-                            </button>
-                            <button class="btn primary" data-action="new-transaction">
-                                + Transaksi Baru
-                            </button>
+                            <button class="btn" id="exportReport">↓ Export</button>
+                            <button class="btn primary" data-action="new-sale">＋ Transaksi Baru</button>
                         </div>
                     </div>
 
-                    <!-- METRICS -->
-                    <div class="metrics">
-                        <article class="metric">
-                            <div class="metric-top">
-                                <span class="metric-label">Total Pendapatan</span>
-                                <div class="metric-icon blue">↗</div>
-                            </div>
-                            <div class="metric-value">Rp 248,5 jt</div>
-                            <div class="trend up">↑ 12,8% <span>dari bulan lalu</span></div>
-                        </article>
+                    <div class="metrics" id="dashboardMetrics"></div>
 
-                        <article class="metric">
-                            <div class="metric-top">
-                                <span class="metric-label">Total Pengeluaran</span>
-                                <div class="metric-icon orange">↙</div>
-                            </div>
-                            <div class="metric-value">Rp 86,2 jt</div>
-                            <div class="trend down">↑ 4,2% <span>dari bulan lalu</span></div>
-                        </article>
-
-                        <article class="metric">
-                            <div class="metric-top">
-                                <span class="metric-label">Laba Bersih</span>
-                                <div class="metric-icon green">◈</div>
-                            </div>
-                            <div class="metric-value">Rp 162,3 jt</div>
-                            <div class="trend up">↑ 18,5% <span>dari bulan lalu</span></div>
-                        </article>
-
-                        <article class="metric">
-                            <div class="metric-top">
-                                <span class="metric-label">Saldo Kas & Bank</span>
-                                <div class="metric-icon purple">▣</div>
-                            </div>
-                            <div class="metric-value">Rp 312,8 jt</div>
-                            <div class="trend up">↑ 8,1% <span>dari bulan lalu</span></div>
-                        </article>
-                    </div>
-
-                    <!-- CHART AND QUICK ACTIONS -->
                     <div class="grid">
-                        <article class="card">
+                        <div class="card">
                             <div class="card-head">
                                 <div>
-                                    <h2>Performa Keuangan</h2>
-                                    <span>Pendapatan dan pengeluaran</span>
-                                </div>
-                                <select id="chartPeriod" class="select-small">
-                                    <option value="year">Tahun 2026</option>
-                                    <option value="half">6 Bulan</option>
-                                </select>
-                            </div>
-
-                            <div class="chart-wrap">
-                                <div class="legend">
-                                    <span><i class="legend-blue"></i>Pendapatan</span>
-                                    <span><i class="legend-green"></i>Pengeluaran</span>
-                                </div>
-
-                                <div class="chart">
-                                    <svg viewBox="0 0 700 230"
-                                        preserveAspectRatio="none"
-                                        role="img"
-                                        aria-label="Grafik pendapatan dan pengeluaran">
-                                        <defs>
-                                            <linearGradient id="areaBlue" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stop-color="#3b82f6" stop-opacity=".22"/>
-                                                <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
-                                            </linearGradient>
-                                        </defs>
-
-                                        <g class="chart-grid">
-                                            <line x1="45" y1="25" x2="680" y2="25"/>
-                                            <line x1="45" y1="70" x2="680" y2="70"/>
-                                            <line x1="45" y1="115" x2="680" y2="115"/>
-                                            <line x1="45" y1="160" x2="680" y2="160"/>
-                                            <line x1="45" y1="205" x2="680" y2="205"/>
-                                        </g>
-
-                                        <g class="axis">
-                                            <text x="5" y="28">80 jt</text>
-                                            <text x="5" y="73">60 jt</text>
-                                            <text x="5" y="118">40 jt</text>
-                                            <text x="5" y="163">20 jt</text>
-                                            <text x="15" y="208">0</text>
-                                        </g>
-
-                                        <path class="chart-area"
-                                            d="M45 145 L150 120 L255 130 L360 82 L465 95 L570 55 L680 35 L680 205 L45 205 Z"/>
-
-                                        <path class="chart-line blue-line"
-                                            d="M45 145 L150 120 L255 130 L360 82 L465 95 L570 55 L680 35"/>
-
-                                        <path class="chart-line green-line"
-                                            d="M45 175 L150 165 L255 172 L360 145 L465 155 L570 130 L680 142"/>
-
-                                        <g class="axis month-labels">
-                                            <text x="45" y="225">Jan</text>
-                                            <text x="150" y="225">Feb</text>
-                                            <text x="255" y="225">Mar</text>
-                                            <text x="360" y="225">Apr</text>
-                                            <text x="465" y="225">Mei</text>
-                                            <text x="570" y="225">Jun</text>
-                                            <text x="680" y="225" text-anchor="end">Jul</text>
-                                        </g>
-                                    </svg>
+                                    <h2>Ringkasan Kas</h2>
+                                    <span>Pergerakan saldo perusahaan</span>
                                 </div>
                             </div>
-                        </article>
+                            <div id="cashSummary"></div>
+                        </div>
 
-                        <article class="card">
+                        <div class="card">
                             <div class="card-head">
                                 <div>
-                                    <h2>Akses Cepat</h2>
-                                    <span>Aktivitas yang sering digunakan</span>
+                                    <h2>Aksi Cepat</h2>
+                                    <span>Transaksi yang sering digunakan</span>
                                 </div>
                             </div>
-
                             <div class="quick">
-                                <button data-action="new-sales">
-                                    <span class="quick-icon">↗</span>
-                                    <b>Faktur Penjualan</b>
-                                    <span>Buat invoice baru</span>
+                                <button data-action="new-sale">
+                                    <span>▤</span><b>Invoice</b>
+                                    <small>Buat invoice penjualan</small>
                                 </button>
-
                                 <button data-action="new-purchase">
-                                    <span class="quick-icon">↙</span>
-                                    <b>Tagihan Pembelian</b>
-                                    <span>Catat pembelian</span>
+                                    <span>▧</span><b>Pembelian</b>
+                                    <small>Catat pembelian barang</small>
                                 </button>
-
                                 <button data-action="new-expense">
-                                    <span class="quick-icon">−</span>
-                                    <b>Biaya</b>
-                                    <span>Catat pengeluaran</span>
+                                    <span>▤</span><b>Pengeluaran</b>
+                                    <small>Catat biaya perusahaan</small>
                                 </button>
-
-                                <button data-action="new-transfer">
-                                    <span class="quick-icon">⇄</span>
-                                    <b>Transfer Dana</b>
-                                    <span>Pindah saldo</span>
+                                <button data-action="new-capital">
+                                    <span>＋</span><b>Modal</b>
+                                    <small>Tambah modal pemilik</small>
                                 </button>
                             </div>
-                        </article>
+                        </div>
                     </div>
 
-                    <!-- TRANSACTIONS -->
-                    <article class="card activity">
+                    <div class="card activity">
                         <div class="card-head">
                             <div>
-                                <h2>Transaksi Terbaru</h2>
-                                <span>Aktivitas keuangan terakhir</span>
+                                <h2>Transaksi Terakhir</h2>
+                                <span>Aktivitas keuangan perusahaan</span>
                             </div>
-                            <button class="text-button" data-view-link="reports">
-                                Lihat semua →
-                            </button>
+                            <button class="btn small" data-goto="general">Lihat jurnal →</button>
                         </div>
+                        <div id="recentTransactions"></div>
+                    </div>
 
-                        <div class="table-wrap">
-                            <table class="table" id="transactionTable">
-                                <thead>
-                                    <tr>
-                                        <th>No. Transaksi</th>
-                                        <th>Tanggal</th>
-                                        <th>Deskripsi</th>
-                                        <th>Jenis</th>
-                                        <th>Jumlah</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="reference">INV-2026-001</td>
-                                        <td>25 Nov 2026</td>
-                                        <td>Penjualan merchandise</td>
-                                        <td>Penjualan</td>
-                                        <td class="amount">Rp 12.500.000</td>
-                                        <td><span class="status success">Lunas</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="reference">PUR-2026-018</td>
-                                        <td>24 Nov 2026</td>
-                                        <td>Pembelian bahan produksi</td>
-                                        <td>Pembelian</td>
-                                        <td class="amount">Rp 4.250.000</td>
-                                        <td><span class="status pending">Menunggu</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="reference">EXP-2026-043</td>
-                                        <td>23 Nov 2026</td>
-                                        <td>Biaya operasional</td>
-                                        <td>Pengeluaran</td>
-                                        <td class="amount">Rp 1.750.000</td>
-                                        <td><span class="status success">Selesai</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="reference">INV-2026-002</td>
-                                        <td>22 Nov 2026</td>
-                                        <td>Pesanan pelanggan</td>
-                                        <td>Penjualan</td>
-                                        <td class="amount">Rp 8.900.000</td>
-                                        <td><span class="status success">Lunas</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                    <div class="card explorer">
+                        <div class="card-head">
+                            <div>
+                                <h2>Modul Akuntansi</h2>
+                                <span>Akses cepat ke seluruh fitur</span>
+                            </div>
                         </div>
-                        <div id="emptySearch" class="empty-state hidden">
-                            Tidak ada transaksi yang cocok dengan pencarian.
+                        <div class="explorer-grid">
+                            <button class="module" data-goto="general"><b>▤</b><span>Buku Besar<small>Akun & jurnal</small></span></button>
+                            <button class="module" data-goto="cash"><b>▣</b><span>Kas & Bank<small>Saldo & mutasi</small></span></button>
+                            <button class="module" data-goto="sales"><b>▥</b><span>Penjualan<small>Invoice & piutang</small></span></button>
+                            <button class="module" data-goto="purchase"><b>▧</b><span>Pembelian<small>Vendor & utang</small></span></button>
+                            <button class="module" data-goto="inventory"><b>◇</b><span>Persediaan<small>Stok & gudang</small></span></button>
                         </div>
-                    </article>
+                    </div>
                 </section>
 
-                <!-- OTHER MODULES -->
-                <section id="general" class="view">
+                <!-- BUKU BESAR -->
+                <section class="view" id="general">
                     <div class="page-head">
                         <div>
                             <div class="eyebrow">KEUANGAN</div>
                             <h1>Buku Besar</h1>
-                            <p>Kelola akun, jurnal, dan pencatatan keuangan.</p>
+                            <p>Jurnal dan aktivitas akuntansi perusahaan.</p>
                         </div>
-                        <button class="btn primary" data-action="new-journal">+ Jurnal Umum</button>
+                        <button class="btn primary" data-action="new-journal">＋ Jurnal Baru</button>
                     </div>
-                    <div class="module-grid">
-                        <article class="module-card">
-                            <span class="module-symbol">▤</span>
-                            <h3>Daftar Akun</h3>
-                            <p>Kelola akun dan klasifikasi perkiraan.</p>
-                            <button class="btn" data-action="accounts">Buka daftar →</button>
-                        </article>
-                        <article class="module-card">
-                            <span class="module-symbol">▧</span>
-                            <h3>Jurnal Umum</h3>
-                            <p>Catat transaksi debit dan kredit.</p>
-                            <button class="btn" data-action="journal">Lihat jurnal →</button>
-                        </article>
-                        <article class="module-card">
-                            <span class="module-symbol">▥</span>
-                            <h3>Buku Besar</h3>
-                            <p>Lihat mutasi berdasarkan akun.</p>
-                            <button class="btn" data-action="ledger">Lihat buku besar →</button>
-                        </article>
+                    <div class="card activity">
+                        <div class="card-head">
+                            <div><h2>Jurnal Umum</h2><span>Daftar transaksi berdasarkan akun</span></div>
+                        </div>
+                        <div id="journalTable"></div>
                     </div>
                 </section>
 
-                <section id="cash" class="view">
+                <!-- LAPORAN -->
+                <section class="view" id="report">
+                    <div class="page-head">
+                        <div>
+                            <div class="eyebrow">KEUANGAN</div>
+                            <h1>Laporan Keuangan</h1>
+                            <p>Laporan keuangan berdasarkan transaksi yang tersimpan.</p>
+                        </div>
+                        <button class="btn primary" id="printReport">Cetak Laporan</button>
+                    </div>
+                    <div id="reportContent"></div>
+                </section>
+
+                <!-- KAS -->
+                <section class="view" id="cash">
                     <div class="page-head">
                         <div>
                             <div class="eyebrow">KEUANGAN</div>
                             <h1>Kas & Bank</h1>
-                            <p>Kelola rekening, saldo, dan rekonsiliasi.</p>
+                            <p>Pantau saldo dan mutasi kas perusahaan.</p>
                         </div>
-                        <button class="btn primary" data-action="new-transfer">+ Transfer Dana</button>
+                        <button class="btn primary" data-action="new-expense">＋ Transaksi Kas</button>
                     </div>
-                    <div class="metrics">
-                        <article class="metric">
-                            <span class="metric-label">Total Saldo</span>
-                            <div class="metric-value">Rp 312,8 jt</div>
-                        </article>
-                        <article class="metric">
-                            <span class="metric-label">Kas Tunai</span>
-                            <div class="metric-value">Rp 28,5 jt</div>
-                        </article>
-                        <article class="metric">
-                            <span class="metric-label">Bank</span>
-                            <div class="metric-value">Rp 284,3 jt</div>
-                        </article>
-                        <article class="metric">
-                            <span class="metric-label">Rekening Aktif</span>
-                            <div class="metric-value">3</div>
-                        </article>
+                    <div id="cashMetrics" class="metrics"></div>
+                    <div class="card activity">
+                        <div class="card-head"><div><h2>Mutasi Kas</h2><span>Seluruh penerimaan dan pengeluaran</span></div></div>
+                        <div id="cashTable"></div>
                     </div>
-                    <article class="card">
-                        <div class="card-head"><h2>Daftar Rekening</h2></div>
-                        <div class="table-wrap">
-                            <table class="table">
-                                <thead><tr><th>Nama Rekening</th><th>Jenis</th><th>Saldo</th><th>Status</th></tr></thead>
-                                <tbody>
-                                    <tr><td>Kas Utama</td><td>Kas</td><td class="amount">Rp 28.500.000</td><td><span class="status success">Aktif</span></td></tr>
-                                    <tr><td>Bank Operasional</td><td>Bank</td><td class="amount">Rp 184.300.000</td><td><span class="status success">Aktif</span></td></tr>
-                                    <tr><td>Bank Cadangan</td><td>Bank</td><td class="amount">Rp 100.000.000</td><td><span class="status success">Aktif</span></td></tr>
-                                </tbody>
-                            </table>
+                </section>
+
+                <!-- PENJUALAN -->
+                <section class="view" id="sales">
+                    <div class="page-head">
+                        <div>
+                            <div class="eyebrow">OPERASIONAL</div>
+                            <h1>Penjualan</h1>
+                            <p>Kelola invoice, pembeli, penerimaan, dan piutang.</p>
                         </div>
-                    </article>
+                        <button class="btn primary" data-action="new-sale">＋ Invoice Baru</button>
+                    </div>
+                    <div id="salesMetrics" class="metrics"></div>
+                    <div class="card activity">
+                        <div class="card-head"><div><h2>Daftar Penjualan</h2><span>Invoice dan status pembayaran</span></div></div>
+                        <div id="salesTable"></div>
+                    </div>
                 </section>
 
-                <section id="sales" class="view">
+                <!-- PEMBELIAN -->
+                <section class="view" id="purchase">
                     <div class="page-head">
-                        <div><div class="eyebrow">OPERASIONAL</div><h1>Penjualan</h1><p>Kelola faktur, pelanggan, dan piutang usaha.</p></div>
-                        <button class="btn primary" data-action="new-sales">+ Faktur Penjualan</button>
+                        <div>
+                            <div class="eyebrow">OPERASIONAL</div>
+                            <h1>Pembelian</h1>
+                            <p>Kelola pembelian barang dan tagihan vendor.</p>
+                        </div>
+                        <button class="btn primary" data-action="new-purchase">＋ Pembelian Baru</button>
                     </div>
-                    <div class="metrics">
-                        <article class="metric"><span class="metric-label">Total Penjualan</span><div class="metric-value">Rp 248,5 jt</div></article>
-                        <article class="metric"><span class="metric-label">Faktur Terbit</span><div class="metric-value">128</div></article>
-                        <article class="metric"><span class="metric-label">Belum Dibayar</span><div class="metric-value">Rp 18,2 jt</div></article>
-                        <article class="metric"><span class="metric-label">Pelanggan Aktif</span><div class="metric-value">86</div></article>
+                    <div id="purchaseMetrics" class="metrics"></div>
+                    <div class="card activity">
+                        <div class="card-head"><div><h2>Rincian Pembelian</h2><span>Daftar pembelian barang</span></div></div>
+                        <div id="purchaseTable"></div>
                     </div>
-                    <article class="card"><div class="card-head"><h2>Faktur Penjualan</h2></div><div class="empty-panel">Daftar faktur penjualan akan ditampilkan di sini.</div></article>
                 </section>
 
-                <section id="purchase" class="view">
+                <!-- PERSEDIAAN -->
+                <section class="view" id="inventory">
                     <div class="page-head">
-                        <div><div class="eyebrow">OPERASIONAL</div><h1>Pembelian</h1><p>Kelola tagihan pemasok dan pembelian usaha.</p></div>
-                        <button class="btn primary" data-action="new-purchase">+ Pembelian Baru</button>
+                        <div>
+                            <div class="eyebrow">OPERASIONAL</div>
+                            <h1>Persediaan</h1>
+                            <p>Pantau nilai stok dan pergerakan barang.</p>
+                        </div>
+                        <button class="btn primary" data-action="new-purchase">＋ Barang Masuk</button>
                     </div>
-                    <div class="metrics">
-                        <article class="metric"><span class="metric-label">Total Pembelian</span><div class="metric-value">Rp 86,2 jt</div></article>
-                        <article class="metric"><span class="metric-label">Tagihan</span><div class="metric-value">34</div></article>
-                        <article class="metric"><span class="metric-label">Belum Dibayar</span><div class="metric-value">Rp 12,4 jt</div></article>
-                        <article class="metric"><span class="metric-label">Pemasok</span><div class="metric-value">21</div></article>
+                    <div id="inventoryMetrics" class="metrics"></div>
+                    <div class="card activity">
+                        <div class="card-head"><div><h2>Daftar Barang</h2><span>Ringkasan stok persediaan</span></div></div>
+                        <div id="inventoryTable"></div>
                     </div>
-                    <article class="card"><div class="card-head"><h2>Daftar Pembelian</h2></div><div class="empty-panel">Daftar pembelian akan ditampilkan di sini.</div></article>
                 </section>
 
-                <section id="inventory" class="view">
+                <!-- ASET -->
+                <section class="view" id="asset">
                     <div class="page-head">
-                        <div><div class="eyebrow">OPERASIONAL</div><h1>Persediaan</h1><p>Pantau stok dan pergerakan barang.</p></div>
-                        <button class="btn primary" data-action="new-product">+ Produk Baru</button>
+                        <div>
+                            <div class="eyebrow">OPERASIONAL</div>
+                            <h1>Aset Tetap</h1>
+                            <p>Kelola aset dan penyusutan perusahaan.</p>
+                        </div>
+                        <button class="btn primary" data-action="new-asset">＋ Tambah Aset</button>
                     </div>
-                    <div class="metrics">
-                        <article class="metric"><span class="metric-label">Total Produk</span><div class="metric-value">248</div></article>
-                        <article class="metric"><span class="metric-label">Stok Tersedia</span><div class="metric-value">1.842</div></article>
-                        <article class="metric"><span class="metric-label">Stok Menipis</span><div class="metric-value">12</div></article>
-                        <article class="metric"><span class="metric-label">Nilai Persediaan</span><div class="metric-value">Rp 74,5 jt</div></article>
-                    </div>
-                    <article class="card"><div class="card-head"><h2>Daftar Produk</h2></div><div class="empty-panel">Daftar produk dan stok akan ditampilkan di sini.</div></article>
-                </section>
-
-                <section id="asset" class="view">
-                    <div class="page-head">
-                        <div><div class="eyebrow">OPERASIONAL</div><h1>Aset Tetap</h1><p>Kelola aset dan penyusutan perusahaan.</p></div>
-                        <button class="btn primary" data-action="new-asset">+ Aset Baru</button>
-                    </div>
-                    <div class="metrics">
-                        <article class="metric"><span class="metric-label">Total Aset</span><div class="metric-value">18</div></article>
-                        <article class="metric"><span class="metric-label">Nilai Perolehan</span><div class="metric-value">Rp 420 jt</div></article>
-                        <article class="metric"><span class="metric-label">Akumulasi Penyusutan</span><div class="metric-value">Rp 48 jt</div></article>
-                        <article class="metric"><span class="metric-label">Nilai Buku</span><div class="metric-value">Rp 372 jt</div></article>
-                    </div>
-                    <article class="card"><div class="card-head"><h2>Daftar Aset</h2></div><div class="empty-panel">Daftar aset tetap akan ditampilkan di sini.</div></article>
-                </section>
-
-                <section id="reports" class="view">
-                    <div class="page-head">
-                        <div><div class="eyebrow">ANALISIS</div><h1>Laporan</h1><p>Ringkasan dan laporan keuangan perusahaan.</p></div>
-                        <button class="btn" id="reportExport">↓ Export</button>
-                    </div>
-                    <div class="module-grid">
-                        <article class="module-card"><span class="module-symbol">▥</span><h3>Laba Rugi</h3><p>Ringkasan pendapatan, beban, dan laba bersih.</p><button class="btn" data-action="report-profit">Buka laporan →</button></article>
-                        <article class="module-card"><span class="module-symbol">▤</span><h3>Neraca</h3><p>Posisi aset, kewajiban, dan ekuitas.</p><button class="btn" data-action="report-balance">Buka laporan →</button></article>
-                        <article class="module-card"><span class="module-symbol">▣</span><h3>Arus Kas</h3><p>Aliran kas masuk dan keluar perusahaan.</p><button class="btn" data-action="report-cash">Buka laporan →</button></article>
+                    <div class="card activity">
+                        <div class="card-head"><div><h2>Daftar Aset Tetap</h2><span>Aset milik perusahaan</span></div></div>
+                        <div id="assetTable"></div>
                     </div>
                 </section>
 
@@ -512,7 +302,27 @@
     </main>
 </div>
 
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+    <div class="modal">
+        <div class="modal-head">
+            <div>
+                <h2 id="modalTitle">Transaksi Baru</h2>
+                <span id="modalSubtitle">Masukkan informasi transaksi</span>
+            </div>
+            <button class="close-btn" id="closeModal">×</button>
+        </div>
+        <form id="transactionForm">
+            <div id="modalFields"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn" id="cancelModal">Batal</button>
+                <button type="submit" class="btn primary">Simpan Transaksi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script src="script.js"></script>
 </body>
