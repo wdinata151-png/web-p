@@ -1,46 +1,85 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Accurate Modern — Accounting Workspace</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Accurate Modern Accounting</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+
 <body>
 
+<!-- AUTH -->
+
 <div id="authScreen" class="auth-screen">
+
     <div class="auth-card">
+
         <div class="brand-mark">A</div>
+
         <h1>Accurate Modern</h1>
         <p>Accounting Workspace</p>
 
         <div class="auth-tabs">
-            <button id="loginTab" class="selected">Login</button>
-            <button id="registerTab">Daftar</button>
+            <button id="loginTab" type="button" class="selected">
+                Login
+            </button>
+
+            <button id="registerTab" type="button">
+                Daftar
+            </button>
         </div>
 
         <form id="authForm">
+
             <label>Email</label>
-            <input id="email" type="email" required placeholder="nama@email.com">
+            <input
+                id="email"
+                type="email"
+                placeholder="nama@email.com"
+                required
+            >
 
             <label>Password</label>
-            <input id="password" type="password" minlength="6"
-                required placeholder="Minimal 6 karakter">
+            <input
+                id="password"
+                type="password"
+                minlength="6"
+                placeholder="Minimal 6 karakter"
+                required
+            >
 
-            <button id="authSubmit" class="primary full">
+            <button
+                id="authSubmit"
+                class="primary full"
+                type="submit"
+            >
                 Login
             </button>
+
         </form>
+
         <p id="authMessage" class="message"></p>
+
     </div>
+
 </div>
+
+<!-- APP -->
 
 <div id="app" class="app hidden">
 
+    <!-- SIDEBAR -->
+
     <aside class="sidebar" id="sidebar">
+
         <div class="brand">
             <div class="brand-mark">A</div>
+
             <div>
                 <strong>Accurate Modern</strong>
                 <small>Accounting Workspace</small>
@@ -53,159 +92,405 @@
         </div>
 
         <nav>
+
             <p class="nav-label">WORKSPACE</p>
-            <button class="nav-item active" data-view="dashboard">◫ Dashboard</button>
-            <button class="nav-item" data-view="sales">▤ Penjualan</button>
-            <button class="nav-item" data-view="purchases">▧ Pembelian</button>
-            <button class="nav-item" data-view="expenses">◈ Pengeluaran</button>
-            <button class="nav-item" data-view="inventory">▦ Persediaan</button>
-            <button class="nav-item" data-view="assets">◇ Aset</button>
+
+            <button class="nav-item active" data-view="dashboard">
+                Dashboard
+            </button>
+
+            <button class="nav-item" data-view="sales">
+                Penjualan
+            </button>
+
+            <button class="nav-item" data-view="purchases">
+                Pembelian
+            </button>
+
+            <button class="nav-item" data-view="expenses">
+                Pengeluaran
+            </button>
+
+            <button class="nav-item" data-view="inventory">
+                Persediaan
+            </button>
+
+            <button class="nav-item" data-view="assets">
+                Aset
+            </button>
 
             <p class="nav-label">ACCOUNTING</p>
-            <button class="nav-item" data-view="journal">≡ Jurnal Umum</button>
-            <button class="nav-item" data-view="reports">▥ Laporan Keuangan</button>
+
+            <button class="nav-item" data-view="journal">
+                Jurnal Umum
+            </button>
+
+            <button class="nav-item" data-view="reports">
+                Laporan
+            </button>
 
             <p class="nav-label">SYSTEM</p>
-            <button class="nav-item" data-view="settings">⚙ Pengaturan</button>
+
+            <button class="nav-item" data-view="settings">
+                Pengaturan
+            </button>
+
         </nav>
 
         <div class="sidebar-bottom">
+
             <span id="userEmail"></span>
-            <button id="logoutBtn" class="logout">Keluar ↗</button>
+
+            <button id="logoutBtn" class="logout">
+                Logout
+            </button>
+
         </div>
+
     </aside>
 
+    <!-- MAIN -->
+
     <main class="main">
+
         <header class="topbar">
-            <button id="mobileMenu" class="mobile-menu">☰</button>
+
+            <button id="mobileMenu" class="mobile-menu">
+                ☰
+            </button>
+
             <div>
-                <strong id="pageTitle">Dashboard</strong>
-                <small>Accurate Modern / Workspace</small>
+                <strong id="pageTitle">
+                    Dashboard
+                </strong>
+
+                <small>
+                    Accurate Modern Workspace
+                </small>
             </div>
+
             <div class="top-actions">
-                <span id="syncStatus">● Terhubung</span>
-                <button id="backupBtn" class="secondary">Backup</button>
+
+                <span id="syncStatus">
+                    ● Terhubung
+                </span>
+
+                <button id="backupBtn" class="secondary">
+                    Backup
+                </button>
+
             </div>
+
         </header>
 
         <div class="content">
 
+            <!-- DASHBOARD -->
+
             <section id="dashboard" class="view active">
+
                 <div class="page-heading">
+
                     <div>
                         <h1>Dashboard</h1>
-                        <p>Ringkasan keuangan perusahaan.</p>
+                        <p>Ringkasan keuangan perusahaan</p>
                     </div>
-                    <button class="primary" data-new="sale">+ Transaksi Baru</button>
+
+                    <button
+                        class="primary"
+                        data-new="sale"
+                    >
+                        + Transaksi
+                    </button>
+
                 </div>
-                <div id="dashboardMetrics" class="metrics"></div>
+
+                <div id="dashboardMetrics"
+                    class="metrics">
+                </div>
+
                 <div class="panel">
+
                     <h3>Transaksi Terbaru</h3>
+
                     <div id="recentTable"></div>
+
                 </div>
+
             </section>
+
+            <!-- SALES -->
 
             <section id="sales" class="view">
+
                 <div class="page-heading">
-                    <div><h1>Penjualan</h1><p>Kelola invoice dan piutang.</p></div>
-                    <button class="primary" data-new="sale">+ Tambah Penjualan</button>
+
+                    <div>
+                        <h1>Penjualan</h1>
+                    </div>
+
+                    <button
+                        class="primary"
+                        data-new="sale"
+                    >
+                        + Penjualan
+                    </button>
+
                 </div>
-                <div id="salesMetrics" class="metrics"></div>
-                <div class="panel"><div id="salesTable"></div></div>
+
+                <div id="salesMetrics"
+                    class="metrics">
+                </div>
+
+                <div class="panel">
+                    <div id="salesTable"></div>
+                </div>
+
             </section>
+
+            <!-- PURCHASES -->
 
             <section id="purchases" class="view">
+
                 <div class="page-heading">
-                    <div><h1>Pembelian</h1><p>Kelola supplier dan pembelian.</p></div>
-                    <button class="primary" data-new="purchase">+ Pembelian</button>
+
+                    <div>
+                        <h1>Pembelian</h1>
+                    </div>
+
+                    <button
+                        class="primary"
+                        data-new="purchase"
+                    >
+                        + Pembelian
+                    </button>
+
                 </div>
-                <div id="purchaseMetrics" class="metrics"></div>
-                <div class="panel"><div id="purchaseTable"></div></div>
+
+                <div id="purchaseMetrics"
+                    class="metrics">
+                </div>
+
+                <div class="panel">
+                    <div id="purchaseTable"></div>
+                </div>
+
             </section>
+
+            <!-- EXPENSES -->
 
             <section id="expenses" class="view">
+
                 <div class="page-heading">
-                    <div><h1>Pengeluaran</h1><p>Catatan biaya operasional.</p></div>
-                    <button class="primary" data-new="expense">+ Pengeluaran</button>
+
+                    <div>
+                        <h1>Pengeluaran</h1>
+                    </div>
+
+                    <button
+                        class="primary"
+                        data-new="expense"
+                    >
+                        + Pengeluaran
+                    </button>
+
                 </div>
-                <div id="expenseMetrics" class="metrics"></div>
-                <div class="panel"><div id="expenseTable"></div></div>
+
+                <div id="expenseMetrics"
+                    class="metrics">
+                </div>
+
+                <div class="panel">
+                    <div id="expenseTable"></div>
+                </div>
+
             </section>
+
+            <!-- INVENTORY -->
 
             <section id="inventory" class="view">
-                <div class="page-heading">
-                    <div><h1>Persediaan</h1><p>Daftar barang yang dibeli.</p></div>
+
+                <h1>Persediaan</h1>
+
+                <div class="panel">
+                    <div id="inventoryTable"></div>
                 </div>
-                <div class="panel"><div id="inventoryTable"></div></div>
+
             </section>
+
+            <!-- ASSET -->
 
             <section id="assets" class="view">
+
                 <div class="page-heading">
-                    <div><h1>Aset</h1><p>Kelola aset tetap.</p></div>
-                    <button class="primary" data-new="asset">+ Tambah Aset</button>
+
+                    <h1>Aset Tetap</h1>
+
+                    <button
+                        class="primary"
+                        data-new="asset"
+                    >
+                        + Aset
+                    </button>
+
                 </div>
-                <div class="panel"><div id="assetTable"></div></div>
+
+                <div class="panel">
+                    <div id="assetTable"></div>
+                </div>
+
             </section>
+
+            <!-- JOURNAL -->
 
             <section id="journal" class="view">
-                <div class="page-heading">
-                    <div><h1>Jurnal Umum</h1><p>Catatan debit dan kredit.</p></div>
+
+                <h1>Jurnal Umum</h1>
+
+                <div class="panel">
+                    <div id="journalTable"></div>
                 </div>
-                <div class="panel"><div id="journalTable"></div></div>
+
             </section>
+
+            <!-- REPORT -->
 
             <section id="reports" class="view">
+
                 <div class="page-heading">
-                    <div><h1>Laporan Keuangan</h1><p>Ringkasan laporan perusahaan.</p></div>
-                    <button id="exportBtn" class="primary">Ekspor CSV</button>
+
+                    <h1>Laporan Keuangan</h1>
+
+                    <button
+                        id="exportBtn"
+                        class="primary"
+                    >
+                        Export CSV
+                    </button>
+
                 </div>
+
                 <div id="reportContent"></div>
+
             </section>
+
+            <!-- SETTINGS -->
 
             <section id="settings" class="view">
-                <div class="page-heading">
-                    <div><h1>Pengaturan</h1><p>Konfigurasi workspace.</p></div>
-                </div>
+
+                <h1>Pengaturan</h1>
+
                 <div class="panel">
-                    <h3>Informasi Perusahaan</h3>
+
                     <label>Nama Perusahaan</label>
+
                     <input id="companyInput">
-                    <button id="saveCompany" class="primary">Simpan Perubahan</button>
+
+                    <br><br>
+
+                    <button
+                        id="saveCompany"
+                        class="primary"
+                    >
+                        Simpan
+                    </button>
+
                     <hr>
-                    <h3>Database</h3>
-                    <p>Database terhubung dengan Supabase.</p>
-                    <button id="restoreBtn" class="secondary">Pulihkan Backup JSON</button>
-                    <input type="file" id="restoreInput" accept=".json" hidden>
-                    <button id="resetBtn" class="danger">Reset Data</button>
+
+                    <button
+                        id="restoreBtn"
+                        class="secondary"
+                    >
+                        Restore Backup
+                    </button>
+
+                    <input
+                        id="restoreInput"
+                        type="file"
+                        hidden
+                        accept=".json"
+                    >
+
+                    <br><br>
+
+                    <button
+                        id="resetBtn"
+                        class="danger"
+                    >
+                        Reset Database
+                    </button>
+
                 </div>
+
             </section>
 
         </div>
+
     </main>
+
 </div>
 
+<!-- MODAL -->
+
 <div id="modal" class="modal">
+
     <div class="modal-card">
+
         <div class="modal-header">
+
             <div>
-                <h2 id="modalTitle">Transaksi Baru</h2>
-                <p>Lengkapi informasi transaksi.</p>
+
+                <h2 id="modalTitle">
+                    Transaksi Baru
+                </h2>
+
+                <p>
+                    Lengkapi data berikut
+                </p>
+
             </div>
-            <button id="closeModal">✕</button>
+
+            <button
+                id="closeModal"
+                type="button"
+            >
+                ✕
+            </button>
+
         </div>
+
         <form id="dataForm">
+
             <div id="formFields"></div>
+
             <div class="modal-actions">
-                <button type="button" id="cancelModal" class="secondary">Batal</button>
-                <button type="submit" class="primary">Simpan</button>
+
+                <button
+                    type="button"
+                    id="cancelModal"
+                    class="secondary"
+                >
+                    Batal
+                </button>
+
+                <button
+                    type="submit"
+                    class="primary"
+                >
+                    Simpan
+                </button>
+
             </div>
+
         </form>
+
     </div>
+
 </div>
 
 <div id="toast" class="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="app.js"></script>
+
 </body>
 </html>
