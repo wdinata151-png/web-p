@@ -1,1015 +1,1155 @@
-
 "use strict";
 
-/* ==========================================
-   ACCURATE MODERN
-   SUPABASE DATABASE ENGINE
-========================================== */
+/* ==========================
+   SUPABASE
+========================== */
 
-// Project URL milikmu
-const SUPABASE_URL = "https://fatdiclbwlacpvoeronr.supabase.co";
+const SUPABASE_URL =
+"https://fatdiclbwlacpvoeronr.supabase.co";
 
-// Publishable key milikmu
 const SUPABASE_KEY =
-"sb_publishable_B_KpQFcM84U5NpxRaap-sw_rsa4HQEx";
+"PASTE_SUPABASE_PUBLISHABLE_KEY";
 
 const { createClient } = window.supabase;
-
-const client = createClient(SUPABASE_URL, SUPABASE_KEY);
+const client = createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
 
 const $ = id => document.getElementById(id);
-const money = n => new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0
-}).format(Number(n) || 0);
-
-const num = v => Number(v) || 0;
-const today = () => new Date().toISOString().slice(0, 10);
-const uid = prefix => prefix + "-" + crypto.randomUUID().slice(0, 8).toUpperCase();
 
 let db = null;
 let user = null;
 let mode = "login";
-let editing = null;
-let currentType = null;
-let toastTimer;
 
 const emptyDatabase = () => ({
-    version: 1,
-    sales: [],
-    purchases: [],
-    expenses: [],
-    assets: [],
-    journals: [],
-    capital: 1500000,
-    cogs: 0
+  version: 1,
+  sales: [],
+  purchases: [],
+  expenses: [],
+  assets: [],
+  journals: [],
+  capital: 1500000,
+  cogs: 0
 });
 
-/* ==========================================
-   UTILITIES
-========================================== */
+/* ==========================
+   UTIL
+========================== */
 
-function notify(message) {
-    $("toast").textContent = message;
-    $("toast").classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => {
-        $("toast").classList.remove("show");
-    }, 2600);
+function money(value) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0
+  }).format(Number(value) || 0);
+}
+
+function num(value) {
+  return Number(value) || 0;
+}
+
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function uid(prefix) {
+  return (
+    prefix +
+    "-" +
+    crypto.randomUUID()
+      .slice(0, 8)
+      .toUpperCase()
+  );
 }
 
 function escapeHTML(value) {
-    return String(value ?? "").replace(/[&<>"']/g, c => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;"
-    })[c]);
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
-function setSync(message) {
-    $("syncStatus").textContent = "● " + message;
+/* ==========================
+   TOAST
+========================== */
+
+let toastTimer;
+
+function notify(message) {
+
+  const toast = $("toast");
+
+  toast.textContent = message;
+  toast.classList.add("show");
+
+  clearTimeout(toastTimer);
+
+  toastTimer = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 3000);
+
 }
 
-/* ==========================================
-   AUTHENTICATION
-========================================== */
+/* ==========================
+   AUTH MODE
+========================== */
 
 function setAuthMode(nextMode) {
-    mode = nextMode;
 
-    $("loginTab").classList.toggle("selected", mode === "login");
-    $("registerTab").classList.toggle("selected", mode === "register");
+  mode = nextMode;
 
-    $("authSubmit").textContent =
-        mode === "login" ? "Login" : "Buat Akun";
+  $("loginTab").classList.toggle(
+    "selected",
+    mode === "login"
+  );
 
-    $("authMessage").textContent = "";
+  $("registerTab").classList.toggle(
+    "selected",
+    mode === "register"
+  );
+
+  $("authSubmit").textContent =
+    mode === "login"
+      ? "Login"
+      : "Daftar";
+
 }
 
-$("loginTab").onclick = () => setAuthMode("login");
-$("registerTab").onclick = () => setAuthMode("register");
+$("loginTab")?.addEventListener(
+  "click",
+  () => setAuthMode("login")
+);
 
-$("authForm").addEventListener("submit", async event => {
-    event.preventDefault();
+$("registerTab")?.addEventListener(
+  "click",
+  () => setAuthMode("register")
+);
 
-    const email = $("email").value.trim();
-    const password = $("password").value;
-
-    $("authSubmit").disabled = true;
-    $("authMessage").textContent = "Memproses...";
-
-    try {
-        if (mode === "register") {
-            const { data, error } = await client.auth.signUp({
-                email,
-                password
-            });
-
-            if (error) throw error;
-
-            if (!data.session) {
-                $("authMessage").textContent =
-                    "Pendaftaran berhasil. Periksa email untuk verifikasi, kemudian login.";
-            } else {
-                $("authMessage").textContent = "Akun berhasil dibuat.";
-            }
-        } else {
-            const { error } = await client.auth.signInWithPassword({
-                email,
-                password
-            });
-
-            if (error) throw error;
-
-            await initializeApp();
-        }
-    } catch (error) {
-        $("authMessage").textContent = error.message;
-    } finally {
-        $("authSubmit").disabled = false;
-    }
-});
-
-$("logoutBtn").onclick = async () => {
-    const { error } = await client.auth.signOut();
-
-    if (error) return notify(error.message);
-
-    user = null;
-    db = null;
-
-    $("app").classList.add("hidden");
-    $("authScreen").classList.remove("hidden");
-
-    notify("Berhasil keluar.");
-};
-
-/* ==========================================
+/* ==========================
    DATABASE
-========================================== */
+========================== */
 
 async function loadDatabase() {
-    setSync("Mengambil data...");
 
-    const { data, error } = await client
-        .from("workspace_data")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
+  const { data, error } =
+    await client
+      .from("workspace_data")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-    if (error) throw error;
+  if (error) throw error;
 
-    if (!data) {
-        db = emptyDatabase();
-
-        const { error: insertError } = await client
-            .from("workspace_data")
-            .insert({
-                user_id: user.id,
-                company_name: "Sharing Merchandise Cortis",
-                payload: db
-            });
-
-        if (insertError) throw insertError;
-
-        $("companyName").textContent = "Sharing Merchandise Cortis";
-    } else {
-        db = {
-            ...emptyDatabase(),
-            ...(data.payload || {})
-        };
-
-        $("companyName").textContent = data.company_name;
-    }
-
-    $("companyInput").value = $("companyName").textContent;
-
-    setSync("Terhubung");
-}
-
-let saveQueue = Promise.resolve();
-
-function saveDatabase() {
-    const snapshot = structuredClone(db);
-
-    saveQueue = saveQueue.then(async () => {
-        setSync("Menyimpan...");
-
-        const { error } = await client
-            .from("workspace_data")
-            .upsert({
-                user_id: user.id,
-                company_name: $("companyName").textContent,
-                payload: snapshot,
-                updated_at: new Date().toISOString()
-            }, {
-                onConflict: "user_id"
-            });
-
-        if (error) throw error;
-
-        setSync("Tersimpan");
-    }).catch(error => {
-        console.error(error);
-        setSync("Gagal menyimpan");
-        notify("Gagal menyimpan: " + error.message);
-        throw error;
-    });
-
-    return saveQueue;
-}
-
-async function initializeApp() {
-    try {
-        const { data, error } = await client.auth.getUser();
-
-        if (error) throw error;
-
-        user = data.user;
-
-        if (!user) return;
-
-        await loadDatabase();
-
-        $("userEmail").textContent = user.email;
-
-        $("authScreen").classList.add("hidden");
-        $("app").classList.remove("hidden");
-
-        renderAll();
-        openView("dashboard");
-
-    } catch (error) {
-        console.error(error);
-        notify("Database gagal dimuat: " + error.message);
-    }
-}
-
-client.auth.onAuthStateChange((event, session) => {
-    if (event === "SIGNED_IN" && session?.user) {
-        user = session.user;
-        initializeApp();
-    }
-});
-
-/* ==========================================
-   ACCOUNTING CALCULATIONS
-========================================== */
-
-function totals() {
-    const sum = (arr, key) =>
-        arr.reduce((s, x) => s + num(x[key]), 0);
-
-    const revenue = sum(db.sales, "total");
-    const received = sum(db.sales, "paid");
-    const receivable = sum(db.sales, "total") - received;
-
-    const purchases = sum(db.purchases, "amount");
-    const purchasePaid = sum(db.purchases, "paid");
-
-    const expenses = sum(db.expenses, "amount");
-    const expensePaid = sum(db.expenses, "paid");
-
-    const payable = purchases - purchasePaid;
-    const assets = sum(db.assets, "value");
-
-    const inventory = Math.max(0, purchases - num(db.cogs));
-
-    const cash = num(db.capital) + received
-        - purchasePaid - expensePaid - assets;
-
-    const grossProfit = revenue - num(db.cogs);
-    const netProfit = grossProfit - expenses;
-
-    const equity = num(db.capital) + netProfit;
-
-    return {
-        revenue,
-        received,
-        receivable,
-        purchases,
-        purchasePaid,
-        expenses,
-        expensePaid,
-        payable,
-        assets,
-        inventory,
-        cash,
-        grossProfit,
-        netProfit,
-        equity,
-        totalAssets: cash + receivable + inventory + assets
-    };
-}
-
-/* ==========================================
-   TABLE RENDERING
-========================================== */
-
-function table(headers, rows) {
-    if (!rows.length) {
-        return '<p class="metric-note">Belum ada data tersedia.</p>';
-    }
-
-    return `
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>${headers.map(x => `<th>${escapeHTML(x)}</th>`).join("")}</tr>
-                </thead>
-                <tbody>${rows.join("")}</tbody>
-            </table>
-        </div>`;
-}
-
-function metric(label, value, note = "") {
-    return `
-        <div class="metric">
-            <span class="metric-label">${escapeHTML(label)}</span>
-            <div class="metric-value">${escapeHTML(value)}</div>
-            <div class="metric-note">${escapeHTML(note)}</div>
-        </div>`;
-}
-
-function status(paid, total) {
-    if (paid >= total) return '<span class="status paid">Lunas</span>';
-    if (paid > 0) return '<span class="status partial">Sebagian</span>';
-    return '<span class="status unpaid">Belum bayar</span>';
-}
-
-function actionButtons(type, id) {
-    return `
-        <button class="action" data-edit="${type}" data-id="${escapeHTML(id)}">Edit</button>
-        <button class="action delete" data-delete="${type}" data-id="${escapeHTML(id)}">Hapus</button>`;
-}
-
-function rowsFor(type, records) {
-    return records.map(x => `
-        <tr>
-            <td><b>${escapeHTML(x.id)}</b></td>
-            <td>${escapeHTML(x.date)}</td>
-            <td>${escapeHTML(x.name)}</td>
-            <td>${escapeHTML(x.description)}</td>
-            <td class="amount">${money(x.amount)}</td>
-            <td>${status(num(x.paid), num(x.amount))}</td>
-            <td>${actionButtons(type, x.id)}</td>
-        </tr>
-    `);
-}
-
-/* ==========================================
-   DASHBOARD
-========================================== */
-
-function renderDashboard() {
-    const t = totals();
-
-    $("dashboardMetrics").innerHTML = [
-        metric("Kas & Bank", money(t.cash), "Saldo kas"),
-        metric("Piutang", money(t.receivable), "Tagihan pelanggan"),
-        metric("Hutang", money(t.payable), "Tagihan supplier"),
-        metric("Laba Bersih", money(t.netProfit), "Laba berjalan")
-    ].join("");
-
-    const all = [
-        ...db.sales.map(x => ({ ...x, type: "Penjualan" })),
-        ...db.purchases.map(x => ({ ...x, type: "Pembelian" })),
-        ...db.expenses.map(x => ({ ...x, type: "Pengeluaran" }))
-    ].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
-
-    $("recentTable").innerHTML = table(
-        ["Tanggal", "Jenis", "Keterangan", "Nominal"],
-        all.map(x => `
-            <tr>
-                <td>${escapeHTML(x.date)}</td>
-                <td>${escapeHTML(x.type)}</td>
-                <td>${escapeHTML(x.description || x.item || x.customer || "")}</td>
-                <td class="amount">${money(x.amount || x.total)}</td>
-            </tr>
-        `)
-    );
-}
-
-/* ==========================================
-   SALES
-========================================== */
-
-function renderSales() {
-    const t = totals();
-
-    $("salesMetrics").innerHTML = [
-        metric("Penjualan", money(t.revenue)),
-        metric("Kas Diterima", money(t.received)),
-        metric("Piutang", money(t.receivable)),
-        metric("Invoice", String(db.sales.length))
-    ].join("");
-
-    $("salesTable").innerHTML = table(
-        ["Invoice", "Tanggal", "Pelanggan", "Barang", "Total", "Pembayaran", "Status", "Aksi"],
-        db.sales.map(x => `
-            <tr>
-                <td>${escapeHTML(x.id)}</td>
-                <td>${escapeHTML(x.date)}</td>
-                <td>${escapeHTML(x.customer)}</td>
-                <td>${escapeHTML(x.item)}</td>
-                <td>${money(x.total)}</td>
-                <td>${money(x.paid)}</td>
-                <td>${status(x.paid, x.total)}</td>
-                <td>${actionButtons("sale", x.id)}</td>
-            </tr>
-        `)
-    );
-}
-
-/* ==========================================
-   PURCHASES
-========================================== */
-
-function renderPurchases() {
-    const t = totals();
-
-    $("purchaseMetrics").innerHTML = [
-        metric("Total Pembelian", money(t.purchases)),
-        metric("Pembayaran", money(t.purchasePaid)),
-        metric("Hutang", money(t.payable)),
-        metric("Persediaan", money(t.inventory))
-    ].join("");
-
-    $("purchaseTable").innerHTML = table(
-        ["Nomor", "Tanggal", "Supplier", "Barang", "Total", "Pembayaran", "Status", "Aksi"],
-        db.purchases.map(x => `
-            <tr>
-                <td>${escapeHTML(x.id)}</td>
-                <td>${escapeHTML(x.date)}</td>
-                <td>${escapeHTML(x.vendor)}</td>
-                <td>${escapeHTML(x.item)}</td>
-                <td>${money(x.amount)}</td>
-                <td>${money(x.paid)}</td>
-                <td>${status(x.paid, x.amount)}</td>
-                <td>${actionButtons("purchase", x.id)}</td>
-            </tr>
-        `)
-    );
-}
-
-/* ==========================================
-   EXPENSES
-========================================== */
-
-function renderExpenses() {
-    const t = totals();
-
-    $("expenseMetrics").innerHTML = [
-        metric("Total Biaya", money(t.expenses)),
-        metric("Sudah Dibayar", money(t.expensePaid)),
-        metric("Belum Dibayar", money(t.expenses - t.expensePaid)),
-        metric("Jumlah Transaksi", String(db.expenses.length))
-    ].join("");
-
-    $("expenseTable").innerHTML = table(
-        ["Nomor", "Tanggal", "Kategori", "Keterangan", "Total", "Pembayaran", "Status", "Aksi"],
-        db.expenses.map(x => `
-            <tr>
-                <td>${escapeHTML(x.id)}</td>
-                <td>${escapeHTML(x.date)}</td>
-                <td>${escapeHTML(x.category)}</td>
-                <td>${escapeHTML(x.description)}</td>
-                <td>${money(x.amount)}</td>
-                <td>${money(x.paid)}</td>
-                <td>${status(x.paid, x.amount)}</td>
-                <td>${actionButtons("expense", x.id)}</td>
-            </tr>
-        `)
-    );
-}
-
-/* ==========================================
-   INVENTORY
-========================================== */
-
-function renderInventory() {
-    $("inventoryTable").innerHTML = table(
-        ["Barang", "Supplier", "Tanggal", "Nilai"],
-        db.purchases.map(x => `
-            <tr>
-                <td>${escapeHTML(x.item)}</td>
-                <td>${escapeHTML(x.vendor)}</td>
-                <td>${escapeHTML(x.date)}</td>
-                <td>${money(x.amount)}</td>
-            </tr>
-        `)
-    );
-}
-
-/* ==========================================
-   ASSETS
-========================================== */
-
-function renderAssets() {
-    $("assetTable").innerHTML = table(
-        ["Kode", "Tanggal", "Nama Aset", "Nilai", "Aksi"],
-        db.assets.map(x => `
-            <tr>
-                <td>${escapeHTML(x.id)}</td>
-                <td>${escapeHTML(x.date)}</td>
-                <td>${escapeHTML(x.name)}</td>
-                <td>${money(x.value)}</td>
-                <td>${actionButtons("asset", x.id)}</td>
-            </tr>
-        `)
-    );
-}
-
-/* ==========================================
-   JOURNAL
-========================================== */
-
-function renderJournal() {
-    const t = totals();
-    const entries = [];
-
-    function add(id, date, description, account, debit, credit) {
-        entries.push(`
-            <tr>
-                <td>${escapeHTML(id)}</td>
-                <td>${escapeHTML(date)}</td>
-                <td>${escapeHTML(description)}</td>
-                <td>${escapeHTML(account)}</td>
-                <td>${debit ? money(debit) : "—"}</td>
-                <td>${credit ? money(credit) : "—"}</td>
-            </tr>
-        `);
-    }
-
-    add("OPENING", today(), "Modal awal", "Kas", db.capital, 0);
-    add("OPENING", today(), "Modal awal", "Modal pemilik", 0, db.capital);
-
-    db.sales.forEach(x => {
-        add(x.id, x.date, "Penjualan " + x.customer, "Kas", x.paid, 0);
-        add(x.id, x.date, "Penjualan " + x.customer, "Piutang", x.total - x.paid, 0);
-        add(x.id, x.date, "Penjualan " + x.customer, "Penjualan", 0, x.total);
-    });
-
-    db.purchases.forEach(x => {
-        add(x.id, x.date, "Pembelian " + x.item, "Persediaan", x.amount, 0);
-        add(x.id, x.date, "Pembelian " + x.item, "Kas / Hutang", 0, x.amount);
-    });
-
-    db.expenses.forEach(x => {
-        add(x.id, x.date, x.description, "Beban", x.amount, 0);
-        add(x.id, x.date, x.description, "Kas / Hutang", 0, x.amount);
-    });
-
-    add("HPP", today(), "Harga pokok penjualan", "HPP", db.cogs, 0);
-    add("HPP", today(), "Harga pokok penjualan", "Persediaan", 0, db.cogs);
-
-    $("journalTable").innerHTML = table(
-        ["Referensi", "Tanggal", "Keterangan", "Akun", "Debit", "Kredit"],
-        entries
-    );
-}
-
-/* ==========================================
-   REPORTS
-========================================== */
-
-function renderReports() {
-    const t = totals();
-
-    const reports = [
-        ["Laporan Laba Rugi", [
-            ["Penjualan", t.revenue],
-            ["Harga Pokok Penjualan", -num(db.cogs)],
-            ["Laba Kotor", t.grossProfit],
-            ["Biaya Operasional", -t.expenses],
-            ["Laba Bersih", t.netProfit]
-        ]],
-        ["Laporan Posisi Keuangan", [
-            ["Kas", t.cash],
-            ["Piutang", t.receivable],
-            ["Persediaan", t.inventory],
-            ["Aset Tetap", t.assets],
-            ["Total Aset", t.totalAssets],
-            ["Hutang", t.payable],
-            ["Ekuitas", t.equity],
-            ["Total Kewajiban dan Ekuitas", t.payable + t.equity]
-        ]],
-        ["Laporan Arus Kas", [
-            ["Penerimaan pelanggan", t.received],
-            ["Pembayaran pembelian", -t.purchasePaid],
-            ["Pembayaran biaya", -t.expensePaid],
-            ["Setoran modal", num(db.capital)],
-            ["Pembelian aset", -t.assets],
-            ["Saldo kas", t.cash]
-        ]]
-    ];
-
-    $("reportContent").innerHTML = reports.map(([title, rows]) => `
-        <div class="panel">
-            <h3>${title}</h3>
-            ${table(["Keterangan", "Nilai"], rows.map(([name, value]) => `
-                <tr>
-                    <td>${escapeHTML(name)}</td>
-                    <td class="amount">${money(value)}</td>
-                </tr>
-            `))}
-        </div>
-    `).join("");
-}
-
-/* ==========================================
-   RENDER ALL
-========================================== */
-
-function renderAll() {
-    if (!db) return;
-
-    renderDashboard();
-    renderSales();
-    renderPurchases();
-    renderExpenses();
-    renderInventory();
-    renderAssets();
-    renderJournal();
-    renderReports();
-}
-
-/* ==========================================
-   NAVIGATION
-========================================== */
-
-const titles = {
-    dashboard: "Dashboard",
-    sales: "Penjualan",
-    purchases: "Pembelian",
-    expenses: "Pengeluaran",
-    inventory: "Persediaan",
-    assets: "Aset",
-    journal: "Jurnal Umum",
-    reports: "Laporan Keuangan",
-    settings: "Pengaturan"
-};
-
-function openView(name) {
-    document.querySelectorAll(".view").forEach(x => {
-        x.classList.toggle("active", x.id === name);
-    });
-
-    document.querySelectorAll(".nav-item").forEach(x => {
-        x.classList.toggle("active", x.dataset.view === name);
-    });
-
-    $("pageTitle").textContent = titles[name] || "Dashboard";
-    $("sidebar").classList.remove("open");
-}
-
-document.querySelectorAll(".nav-item").forEach(button => {
-    button.onclick = () => openView(button.dataset.view);
-});
-
-$("mobileMenu").onclick = () => $("sidebar").classList.toggle("open");
-
-/* ==========================================
-   MODAL AND CRUD
-========================================== */
-
-const definitions = {
-    sale: {
-        title: "Penjualan",
-        fields: [
-            ["customer", "Nama Pelanggan", "text"],
-            ["item", "Nama Barang", "text"],
-            ["total", "Total Penjualan", "number"],
-            ["paid", "Pembayaran", "number"],
-            ["cost", "HPP transaksi", "number"]
-        ]
-    },
-    purchase: {
-        title: "Pembelian",
-        fields: [
-            ["vendor", "Supplier", "text"],
-            ["item", "Nama Barang", "text"],
-            ["amount", "Total Pembelian", "number"],
-            ["paid", "Pembayaran", "number"]
-        ]
-    },
-    expense: {
-        title: "Pengeluaran",
-        fields: [
-            ["category", "Kategori", "text"],
-            ["description", "Keterangan", "text"],
-            ["amount", "Total Biaya", "number"],
-            ["paid", "Pembayaran", "number"]
-        ]
-    },
-    asset: {
-        title: "Aset Tetap",
-        fields: [
-            ["name", "Nama Aset", "text"],
-            ["value", "Harga Perolehan", "number"]
-        ]
-    }
-};
-
-function getCollection(type) {
-    return {
-        sale: "sales",
-        purchase: "purchases",
-        expense: "expenses",
-        asset: "assets"
-    }[type];
-}
-
-function openModal(type, record = null) {
-    currentType = type;
-    editing = record;
-
-    const config = definitions[type];
-
-    $("modalTitle").textContent =
-        (record ? "Edit " : "Tambah ") + config.title;
-
-    const fields = [
-        ["date", "Tanggal", "date"],
-        ...config.fields
-    ];
-
-    $("formFields").innerHTML = fields.map(([name, label, inputType]) => `
-        <label>${label}</label>
-        <input
-            name="${name}"
-            type="${inputType}"
-            value="${escapeHTML(record?.[name] ?? (name === "date" ? today() : "0"))}"
-            ${inputType === "number" ? 'min="0" step="1"' : ""}
-            required
-        >
-    `).join("");
-
-    $("modal").classList.add("show");
-}
-
-function closeModal() {
-    $("modal").classList.remove("show");
-    $("dataForm").reset();
-    editing = null;
-    currentType = null;
-}
-
-document.querySelectorAll("[data-new]").forEach(button => {
-    button.onclick = () => openModal(button.dataset.new);
-});
-
-$("closeModal").onclick = closeModal;
-$("cancelModal").onclick = closeModal;
-
-$("dataForm").addEventListener("submit", async event => {
-    event.preventDefault();
-
-    const data = Object.fromEntries(new FormData(event.target));
-
-    const collection = getCollection(currentType);
-    const record = editing
-        ? { ...editing, ...data }
-        : { id: uid(currentType.toUpperCase()), ...data };
-
-    for (const key of ["total", "paid", "amount", "value", "cost"]) {
-        if (key in record) record[key] = num(record[key]);
-    }
-
-    const total = num(record.total ?? record.amount ?? record.value);
-    const paid = num(record.paid);
-
-    if (total <= 0 || paid < 0 || paid > total) {
-        return notify("Periksa nominal transaksi.");
-    }
-
-    if (currentType === "sale" && num(record.cost) < 0) {
-        return notify("HPP tidak valid.");
-    }
-
-    if (currentType === "sale") {
-        if (editing) {
-            db.cogs -= num(editing.cost);
-        }
-        db.cogs += num(record.cost);
-    }
-
-    if (editing) {
-        const index = db[collection].findIndex(x => x.id === editing.id);
-        if (index !== -1) db[collection][index] = record;
-    } else {
-        db[collection].push(record);
-    }
-
-    try {
-        await saveDatabase();
-        renderAll();
-        closeModal();
-        notify("Data berhasil disimpan.");
-    } catch {
-        notify("Penyimpanan gagal. Periksa koneksi.");
-    }
-});
-
-/* ==========================================
-   EDIT AND DELETE
-========================================== */
-
-document.addEventListener("click", async event => {
-    const editButton = event.target.closest("[data-edit]");
-
-    if (editButton) {
-        const type = editButton.dataset.edit;
-        const collection = getCollection(type);
-        const record = db[collection].find(
-            x => x.id === editButton.dataset.id
-        );
-
-        if (record) openModal(type, record);
-        return;
-    }
-
-    const deleteButton = event.target.closest("[data-delete]");
-
-    if (deleteButton) {
-        if (!confirm("Hapus transaksi ini?")) return;
-
-        const type = deleteButton.dataset.delete;
-        const collection = getCollection(type);
-        const id = deleteButton.dataset.id;
-
-        const record = db[collection].find(x => x.id === id);
-
-        if (!record) return;
-
-        if (type === "sale") {
-            db.cogs -= num(record.cost);
-        }
-
-        db[collection] = db[collection].filter(x => x.id !== id);
-
-        try {
-            await saveDatabase();
-            renderAll();
-            notify("Data berhasil dihapus.");
-        } catch {
-            notify("Penghapusan gagal.");
-        }
-    }
-});
-
-/* ==========================================
-   COMPANY SETTINGS
-========================================== */
-
-$("saveCompany").onclick = async () => {
-    const name = $("companyInput").value.trim();
-
-    if (!name) return notify("Nama perusahaan tidak boleh kosong.");
-
-    $("companyName").textContent = name;
-
-    try {
-        await saveDatabase();
-        notify("Nama perusahaan berhasil diperbarui.");
-    } catch {}
-};
-
-/* ==========================================
-   BACKUP AND RESTORE
-========================================== */
-
-function download(filename, content, type) {
-    const blob = new Blob([content], { type });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = filename;
-    link.click();
-
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-async function backup() {
-    download(
-        "accurate-modern-" + today() + ".json",
-        JSON.stringify(db, null, 2),
-        "application/json"
-    );
-}
-
-$("backupBtn").onclick = backup;
-
-$("restoreBtn").onclick = () => $("restoreInput").click();
-
-$("restoreInput").onchange = async event => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    try {
-        const imported = JSON.parse(await file.text());
-
-        const collections = [
-            "sales", "purchases", "expenses", "assets", "journals"
-        ];
-
-        if (
-            imported.version !== 1 ||
-            collections.some(key => !Array.isArray(imported[key])) ||
-            !Number.isFinite(Number(imported.capital)) ||
-            !Number.isFinite(Number(imported.cogs))
-        ) {
-            throw new Error("Struktur backup tidak valid.");
-        }
-
-        if (!confirm("Data sekarang akan diganti dengan backup. Lanjutkan?")) {
-            return;
-        }
-
-        db = { ...emptyDatabase(), ...imported };
-
-        await saveDatabase();
-        renderAll();
-        notify("Backup berhasil dipulihkan.");
-    } catch (error) {
-        notify("Gagal memulihkan: " + error.message);
-    } finally {
-        event.target.value = "";
-    }
-};
-
-/* ==========================================
-   RESET
-========================================== */
-
-$("resetBtn").onclick = async () => {
-    const confirmation = prompt(
-        'Ketik RESET untuk menghapus seluruh data transaksi akun ini.'
-    );
-
-    if (confirmation !== "RESET") return;
+  if (!data) {
 
     db = emptyDatabase();
 
+    const { error: insertError } =
+      await client
+        .from("workspace_data")
+        .insert({
+          user_id: user.id,
+          company_name:
+            "Sharing Merchandise Cortis",
+          payload: db
+        });
+
+    if (insertError) {
+      throw insertError;
+    }
+
+    $("companyName").textContent =
+      "Sharing Merchandise Cortis";
+
+  } else {
+
+    db = {
+      ...emptyDatabase(),
+      ...(data.payload || {})
+    };
+
+    $("companyName").textContent =
+      data.company_name || "Perusahaan";
+
+  }
+
+  $("companyInput").value =
+    $("companyName").textContent;
+
+}
+
+async function saveDatabase() {
+
+  const { error } =
+    await client
+      .from("workspace_data")
+      .upsert({
+        user_id: user.id,
+        company_name:
+          $("companyName").textContent,
+        payload: db
+      });
+
+  if (error) throw error;
+
+}
+
+/* ==========================
+   LOGIN REGISTER
+========================== */
+
+$("authForm")?.addEventListener(
+  "submit",
+  async event => {
+
+    event.preventDefault();
+
+    const email =
+      $("email").value.trim();
+
+    const password =
+      $("password").value;
+
     try {
-        await saveDatabase();
-        renderAll();
-        notify("Database berhasil direset.");
-    } catch {}
+
+      $("authSubmit").disabled = true;
+
+      if (mode === "register") {
+
+        const { error } =
+          await client.auth.signUp({
+            email,
+            password
+          });
+
+        if (error) throw error;
+
+        notify(
+          "Pendaftaran berhasil"
+        );
+
+      } else {
+
+        const { error } =
+          await client.auth
+            .signInWithPassword({
+              email,
+              password
+            });
+
+        if (error) throw error;
+
+        await initializeApp();
+
+      }
+
+    } catch (err) {
+
+      notify(err.message);
+
+    } finally {
+
+      $("authSubmit").disabled = false;
+
+    }
+
+  }
+);
+
+$("logoutBtn")?.addEventListener(
+  "click",
+  async () => {
+
+    await client.auth.signOut();
+
+    location.reload();
+
+  }
+);
+
+/* ==========================
+   TOTALS
+========================== */
+
+function totals() {
+
+  const sum = (arr, key) =>
+    arr.reduce(
+      (a, b) =>
+        a + num(b[key]),
+      0
+    );
+
+  const revenue =
+    sum(db.sales, "total");
+
+  const received =
+    sum(db.sales, "paid");
+
+  const purchases =
+    sum(db.purchases, "amount");
+
+  const purchasePaid =
+    sum(db.purchases, "paid");
+
+  const expenses =
+    sum(db.expenses, "amount");
+
+  const expensePaid =
+    sum(db.expenses, "paid");
+
+  const fixedAssets =
+    sum(db.assets, "value");
+
+  const receivable =
+    revenue - received;
+
+  const payable =
+    purchases - purchasePaid;
+
+  const inventory =
+    Math.max(
+      0,
+      purchases - num(db.cogs)
+    );
+
+  const cash =
+    num(db.capital) +
+    received -
+    purchasePaid -
+    expensePaid -
+    fixedAssets;
+
+  const grossProfit =
+    revenue - num(db.cogs);
+
+  const netProfit =
+    grossProfit - expenses;
+
+  const equity =
+    num(db.capital) +
+    netProfit;
+
+  return {
+    revenue,
+    received,
+    purchases,
+    purchasePaid,
+    expenses,
+    expensePaid,
+    receivable,
+    payable,
+    inventory,
+    cash,
+    netProfit,
+    grossProfit,
+    equity,
+    fixedAssets,
+    totalAssets:
+      cash +
+      inventory +
+      receivable +
+      fixedAssets
+  };
+
+}
+
+/* ==========================
+   COMPONENTS
+========================== */
+
+function metric(
+  label,
+  value,
+  note = ""
+) {
+
+  return `
+  <div class="metric">
+    <div class="metric-label">
+      ${escapeHTML(label)}
+    </div>
+
+    <div class="metric-value">
+      ${escapeHTML(value)}
+    </div>
+
+    <div class="metric-note">
+      ${escapeHTML(note)}
+    </div>
+  </div>
+  `;
+
+}
+
+function table(
+  headers,
+  rows
+) {
+
+  if (!rows.length) {
+
+    return `
+      <p class="metric-note">
+        Belum ada data
+      </p>
+    `;
+  }
+
+  return `
+  <div class="table-wrap">
+
+    <table>
+
+      <thead>
+        <tr>
+          ${headers
+            .map(
+              h =>
+              `<th>${escapeHTML(h)}</th>`
+            )
+            .join("")}
+        </tr>
+      </thead>
+
+      <tbody>
+        ${rows.join("")}
+      </tbody>
+
+    </table>
+
+  </div>
+  `;
+
+}
+
+function status(
+  paid,
+  total
+) {
+
+  if (paid >= total) {
+    return '<span class="status paid">Lunas</span>';
+  }
+
+  if (paid > 0) {
+    return '<span class="status partial">Sebagian</span>';
+  }
+
+  return '<span class="status unpaid">Belum Bayar</span>';
+
+}
+
+/* ==========================
+   DASHBOARD
+========================== */
+
+function renderDashboard() {
+
+  const t = totals();
+
+  $("dashboardMetrics").innerHTML = [
+
+    metric(
+      "Kas",
+      money(t.cash)
+    ),
+
+    metric(
+      "Piutang",
+      money(t.receivable)
+    ),
+
+    metric(
+      "Hutang",
+      money(t.payable)
+    ),
+
+    metric(
+      "Laba Bersih",
+      money(t.netProfit)
+    )
+
+  ].join("");
+
+}
+
+/* ==========================
+   INIT
+========================== */
+
+async function initializeApp() {
+
+  const { data } =
+    await client.auth.getUser();
+
+  user = data.user;
+
+  if (!user) return;
+
+  await loadDatabase();
+
+  $("userEmail").textContent =
+    user.email;
+
+  $("authScreen")
+    .classList.add("hidden");
+
+  $("app")
+    .classList.remove("hidden");
+
+  renderDashboard();
+
+}
+
+/* ==========================
+   SESSION CHECK
+========================== */
+
+(async () => {
+
+  const { data } =
+    await client.auth.getSession();
+
+  if (data.session) {
+    await initializeApp();
+  }
+   /* ==========================
+   NAVIGATION
+========================== */
+
+const titles = {
+  dashboard: "Dashboard",
+  sales: "Penjualan",
+  purchases: "Pembelian",
+  expenses: "Pengeluaran",
+  inventory: "Persediaan",
+  assets: "Aset",
+  journal: "Jurnal Umum",
+  reports: "Laporan",
+  settings: "Pengaturan"
 };
 
-/* ==========================================
-   CSV EXPORT
-========================================== */
+function openView(name) {
 
-$("exportBtn").onclick = () => {
+  document
+    .querySelectorAll(".view")
+    .forEach(view => {
+      view.classList.toggle(
+        "active",
+        view.id === name
+      );
+    });
+
+  document
+    .querySelectorAll(".nav-item")
+    .forEach(btn => {
+
+      btn.classList.toggle(
+        "active",
+        btn.dataset.view === name
+      );
+
+    });
+
+  $("pageTitle").textContent =
+    titles[name] || "Dashboard";
+
+}
+
+document
+  .querySelectorAll(".nav-item")
+  .forEach(btn => {
+
+    btn.addEventListener(
+      "click",
+      () => openView(btn.dataset.view)
+    );
+
+  });
+
+$("mobileMenu")?.addEventListener(
+  "click",
+  () =>
+    $("sidebar")
+      .classList.toggle("open")
+);
+
+/* ==========================
+   ACTION BUTTON
+========================== */
+
+function actionButtons(type, id) {
+
+  return `
+  <button
+    class="action"
+    data-edit="${type}"
+    data-id="${id}">
+    Edit
+  </button>
+
+  <button
+    class="action delete"
+    data-delete="${type}"
+    data-id="${id}">
+    Hapus
+  </button>
+  `;
+
+}
+
+/* ==========================
+   RENDER SALES
+========================== */
+
+function renderSales() {
+
+  if (!db) return;
+
+  $("salesTable").innerHTML =
+    table(
+      [
+        "Invoice",
+        "Tanggal",
+        "Customer",
+        "Barang",
+        "Total",
+        "Bayar",
+        "Status",
+        "Aksi"
+      ],
+
+      db.sales.map(row => `
+      <tr>
+        <td>${row.id}</td>
+        <td>${row.date}</td>
+        <td>${row.customer}</td>
+        <td>${row.item}</td>
+        <td>${money(row.total)}</td>
+        <td>${money(row.paid)}</td>
+        <td>${status(row.paid,row.total)}</td>
+        <td>${actionButtons("sale",row.id)}</td>
+      </tr>
+      `)
+
+    );
+
+}
+
+/* ==========================
+   RENDER PURCHASE
+========================== */
+
+function renderPurchases() {
+
+  if (!db) return;
+
+  $("purchaseTable").innerHTML =
+    table(
+      [
+        "Nomor",
+        "Tanggal",
+        "Supplier",
+        "Barang",
+        "Total",
+        "Bayar",
+        "Status",
+        "Aksi"
+      ],
+
+      db.purchases.map(row => `
+      <tr>
+        <td>${row.id}</td>
+        <td>${row.date}</td>
+        <td>${row.vendor}</td>
+        <td>${row.item}</td>
+        <td>${money(row.amount)}</td>
+        <td>${money(row.paid)}</td>
+        <td>${status(row.paid,row.amount)}</td>
+        <td>${actionButtons("purchase",row.id)}</td>
+      </tr>
+      `)
+
+    );
+
+}
+
+/* ==========================
+   RENDER EXPENSE
+========================== */
+
+function renderExpenses() {
+
+  if (!db) return;
+
+  $("expenseTable").innerHTML =
+    table(
+      [
+        "Nomor",
+        "Tanggal",
+        "Kategori",
+        "Keterangan",
+        "Total",
+        "Bayar",
+        "Status",
+        "Aksi"
+      ],
+
+      db.expenses.map(row => `
+      <tr>
+        <td>${row.id}</td>
+        <td>${row.date}</td>
+        <td>${row.category}</td>
+        <td>${row.description}</td>
+        <td>${money(row.amount)}</td>
+        <td>${money(row.paid)}</td>
+        <td>${status(row.paid,row.amount)}</td>
+        <td>${actionButtons("expense",row.id)}</td>
+      </tr>
+      `)
+
+    );
+
+}
+
+/* ==========================
+   RENDER ASSETS
+========================== */
+
+function renderAssets() {
+
+  $("assetTable").innerHTML =
+    table(
+      [
+        "Kode",
+        "Tanggal",
+        "Nama",
+        "Nilai",
+        "Aksi"
+      ],
+
+      db.assets.map(asset => `
+      <tr>
+        <td>${asset.id}</td>
+        <td>${asset.date}</td>
+        <td>${asset.name}</td>
+        <td>${money(asset.value)}</td>
+        <td>${actionButtons("asset",asset.id)}</td>
+      </tr>
+      `)
+
+    );
+
+}
+
+/* ==========================
+   INVENTORY
+========================== */
+
+function renderInventory() {
+
+  $("inventoryTable").innerHTML =
+    table(
+      [
+        "Barang",
+        "Supplier",
+        "Tanggal",
+        "Nilai"
+      ],
+
+      db.purchases.map(p => `
+      <tr>
+        <td>${p.item}</td>
+        <td>${p.vendor}</td>
+        <td>${p.date}</td>
+        <td>${money(p.amount)}</td>
+      </tr>
+      `)
+
+    );
+
+}
+
+/* ==========================
+   REPORT
+========================== */
+
+function renderReports() {
+
+  const t = totals();
+
+  $("reportContent").innerHTML = `
+
+  <div class="panel">
+
+    <h3>Laba Rugi</h3>
+
+    <p>Penjualan :
+    ${money(t.revenue)}</p>
+
+    <p>HPP :
+    ${money(db.cogs)}</p>
+
+    <p>Laba Kotor :
+    ${money(t.grossProfit)}</p>
+
+    <p>Biaya :
+    ${money(t.expenses)}</p>
+
+    <h2>
+      Laba Bersih :
+      ${money(t.netProfit)}
+    </h2>
+
+  </div>
+
+  <div class="panel">
+
+    <h3>Neraca</h3>
+
+    <p>Kas :
+    ${money(t.cash)}</p>
+
+    <p>Piutang :
+    ${money(t.receivable)}</p>
+
+    <p>Persediaan :
+    ${money(t.inventory)}</p>
+
+    <p>Aset Tetap :
+    ${money(t.fixedAssets)}</p>
+
+    <p>Total Aset :
+    ${money(t.totalAssets)}</p>
+
+  </div>
+
+  `;
+
+}
+
+/* ==========================
+   ALL RENDER
+========================== */
+
+function renderAll() {
+
+  renderDashboard();
+  renderSales();
+  renderPurchases();
+  renderExpenses();
+  renderInventory();
+  renderAssets();
+  renderReports();
+
+}
+
+/* ==========================
+   MODAL CRUD
+========================== */
+
+let currentType = null;
+
+function openSimplePrompt(type) {
+
+  currentType = type;
+
+  const amount =
+    Number(prompt("Nominal"));
+
+  if (!amount) return;
+
+  if (type === "sale") {
+
+    db.sales.push({
+
+      id: uid("INV"),
+      date: today(),
+      customer: "Customer",
+      item: "Barang",
+      total: amount,
+      paid: amount,
+      cost: 0
+
+    });
+
+  }
+
+  if (type === "purchase") {
+
+    db.purchases.push({
+
+      id: uid("PO"),
+      date: today(),
+      vendor: "Supplier",
+      item: "Barang",
+      amount,
+      paid: amount
+
+    });
+
+  }
+
+  if (type === "expense") {
+
+    db.expenses.push({
+
+      id: uid("EXP"),
+      date: today(),
+      category: "Umum",
+      description: "Biaya",
+      amount,
+      paid: amount
+
+    });
+
+  }
+
+  if (type === "asset") {
+
+    db.assets.push({
+
+      id: uid("AST"),
+      date: today(),
+      name: "Aset Baru",
+      value: amount
+
+    });
+
+  }
+
+  saveDatabase()
+    .then(() => {
+
+      renderAll();
+      notify("Data tersimpan");
+
+    });
+
+}
+
+document
+.querySelectorAll("[data-new]")
+.forEach(button => {
+
+  button.addEventListener(
+    "click",
+    () =>
+      openSimplePrompt(
+        button.dataset.new
+      )
+  );
+
+});
+
+/* ==========================
+   DELETE
+========================== */
+
+document.addEventListener(
+  "click",
+  async event => {
+
+    const del =
+      event.target.closest(
+        "[data-delete]"
+      );
+
+    if (!del) return;
+
+    if (
+      !confirm("Hapus data?")
+    ) {
+      return;
+    }
+
+    const type =
+      del.dataset.delete;
+
+    const id =
+      del.dataset.id;
+
+    if (type === "sale") {
+
+      db.sales =
+        db.sales.filter(
+          x => x.id !== id
+        );
+
+    }
+
+    if (type === "purchase") {
+
+      db.purchases =
+        db.purchases.filter(
+          x => x.id !== id
+        );
+
+    }
+
+    if (type === "expense") {
+
+      db.expenses =
+        db.expenses.filter(
+          x => x.id !== id
+        );
+
+    }
+
+    if (type === "asset") {
+
+      db.assets =
+        db.assets.filter(
+          x => x.id !== id
+        );
+
+    }
+
+    await saveDatabase();
+
+    renderAll();
+
+    notify("Data dihapus");
+
+  }
+);
+
+/* ==========================
+   COMPANY
+========================== */
+
+$("saveCompany")?.addEventListener(
+  "click",
+  async () => {
+
+    const name =
+      $("companyInput")
+      .value.trim();
+
+    if (!name) return;
+
+    $("companyName")
+      .textContent = name;
+
+    await saveDatabase();
+
+    notify(
+      "Nama perusahaan disimpan"
+    );
+
+  }
+);
+
+/* ==========================
+   BACKUP
+========================== */
+
+$("backupBtn")?.addEventListener(
+  "click",
+  () => {
+
+    const blob = new Blob(
+      [
+        JSON.stringify(
+          db,
+          null,
+          2
+        )
+      ],
+      {
+        type:
+          "application/json"
+      }
+    );
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const a =
+      document.createElement("a");
+
+    a.href = url;
+
+    a.download =
+      "backup-" +
+      today() +
+      ".json";
+
+    a.click();
+
+  }
+);
+
+/* ==========================
+   EXPORT CSV
+========================== */
+
+$("exportBtn")?.addEventListener(
+  "click",
+  () => {
+
     const t = totals();
 
-    const rows = [
-        ["Laporan", "Nilai"],
-        ["Penjualan", t.revenue],
-        ["HPP", db.cogs],
-        ["Laba Kotor", t.grossProfit],
-        ["Pengeluaran", t.expenses],
-        ["Laba Bersih", t.netProfit],
-        ["Kas", t.cash],
-        ["Piutang", t.receivable],
-        ["Persediaan", t.inventory],
-        ["Hutang", t.payable],
-        ["Total Aset", t.totalAssets],
-        ["Ekuitas", t.equity]
-    ];
+    const csv = `Laporan,Nilai
+Penjualan,${t.revenue}
+HPP,${db.cogs}
+Laba Bersih,${t.netProfit}
+Kas,${t.cash}
+Piutang,${t.receivable}
+Persediaan,${t.inventory}
+`;
 
-    const csv = rows.map(row =>
-        row.map(x => '"' + String(x).replace(/"/g, '""') + '"').join(",")
-    ).join("\r\n");
-
-    download(
-        "laporan-accurate-" + today() + ".csv",
-        "\uFEFF" + csv,
+    const blob =
+      new Blob([csv], {
+        type:
         "text/csv;charset=utf-8"
+      });
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const a =
+      document.createElement("a");
+
+    a.href = url;
+
+    a.download =
+      "laporan.csv";
+
+    a.click();
+
+  }
+);
+
+/* ==========================
+   RESET
+========================== */
+
+$("resetBtn")?.addEventListener(
+  "click",
+  async () => {
+
+    if (
+      prompt(
+        "Ketik RESET"
+      ) !== "RESET"
+    ) {
+      return;
+    }
+
+    db = emptyDatabase();
+
+    await saveDatabase();
+
+    renderAll();
+
+    notify(
+      "Database direset"
     );
-};
 
-/* ==========================================
-   START APPLICATION
-========================================== */
-
-(async function start() {
-    const { data, error } = await client.auth.getSession();
-
-    if (error) {
-        notify(error.message);
-        return;
-    }
-
-    if (data.session) {
-        await initializeApp();
-    }
-})();
-
-console.log("Accurate Modern initialized.");
+  }
+);
