@@ -8,7 +8,7 @@ const SUPABASE_URL =
 "https://fatdiclbwlacpvoeronr.supabase.co";
 
 const SUPABASE_KEY =
-"PASTE_SUPABASE_PUBLISHABLE_KEY";
+"fatdiclbwlacpvoeronr";
 
 const { createClient } = window.supabase;
 const client = createClient(
