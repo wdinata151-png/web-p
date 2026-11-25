@@ -2,8 +2,8 @@
 // SUPABASE CONFIGURATION
 // ============================================
 
-const SUPABASE_URL = "MASUKKAN_PROJECT_URL";
-const SUPABASE_KEY = "MASUKKAN_PUBLISHABLE_KEY";
+const SUPABASE_URL = "https://fatdiclbwlacpvoeronr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_B_KpQFcM84U5NpxRaap-sw_rsa4HQEx";
 
 const TABLE = "accounting_database";
 const ROW_ID = 1;
